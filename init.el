@@ -1,111 +1,18 @@
-#+PROPERTY: header-args :tangle yes :results silent
-My personal emacs configuration made for macos running on a macbook. It doesn't
-have any version or os checks, so you should probably adapt this for your own
-setup if you want to use it.
-
-
-* startup and quality of life
-Section for basic emacs settings and various "quality of life"-stuff.
-
-** early-init.el
-This subsection tangles =~/.emacs.d/early-init.el= which is loaded before
-=init.el= or any package or UI initialization. It's not a *big deal*, but it
-improves startup a bit.
-
-=file-name-handler-alist= is set to nil and reset after init. The
-variable file-name-handler-alist holds a list of handlers, together
-with regular expressions that determine when to apply each handler. In
-short, we don't need that during init.
-
-Bumping =gc-cons-threshold= and =gc-cons-percentage= for a faster
-init. Both will be set to more reasonable values later in =init.org=.
-
-We also invoke the [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Error-Debugging.html][debugger]] for startup.
-
-#+begin_src emacs-lisp :tangle early-init.el
-;;; early-init.el --- -*- no-byte-compile: t-*-
-(defvar startup-file-name-handler-alist file-name-handler-alist)
-(setq file-name-handler-alist nil)                   ; reset later
-
-(setq gc-cons-threshold         most-positive-fixnum ; set to 32MB later
-      gc-cons-percentage        0.6                  ; set to 0.1 later
-      debug-on-error            t                    ; reset to nil later
-      site-run-file             nil                  ; disable site-start.el
-      package-enable-at-startup nil)                 ; we use straight.el
-
-(menu-bar-mode   -1)
-(tool-bar-mode   -1)
-(scroll-bar-mode -1)
-
-(unless (and (display-graphic-p) (eq system-type 'darwin))
-  (push '(menu-bar-lines . 0) default-frame-alist))
-(push '(tool-bar-lines . 0) default-frame-alist)
-(push '(vertical-scroll-bars) default-frame-alist)
-
-(setq inhibit-startup-message t
-      inhibit-scratch-message t
-      load-prefer-newer       t)
-
-(when (file-exists-p "~/.emacs.d/straight/repos/auto-compile/")
-  (progn
-    (add-to-list 'load-path "~/.emacs.d/straight/repos/auto-compile/")
-    (add-to-list 'load-path "~/.emacs.d/straight/repos/packed/")
-    (require 'auto-compile)
-    (auto-compile-on-load-mode +1)
-    (auto-compile-on-save-mode +1)))
-
-(when (file-exists-p "~/.emacs.d/straight/repos/no-littering/")
-  (progn
-    (add-to-list  'load-path "~/.emacs.d/straight/repos/no-littering/")
-    (require 'no-littering)
-    (setq auto-save-file-name-transforms
-          `((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
-    (require 'recentf)
-    (add-to-list 'recentf-exclude no-littering-var-directory)
-    (add-to-list 'recentf-exclude no-littering-etc-directory)))
-
-(setq-default evil-want-keybinding nil)
-#+end_src
-
-** custom.el
-Save custom settings to =~/.emacs.d/custom.el=.
-#+begin_src emacs-lisp
 ;;; init.el --- -*- lexical-binding: t -*-
 (setq custom-file (concat user-emacs-directory "custom.el"))
 (load custom-file 'noerror)
-#+end_src
 
-** user info
-We load user info from =~/.emacs.d/user-info.el= which contains
-#+begin_src emacs-lisp :tangle no
-(setq user-full-name         "name"
-      user-mail-address      "mail"
-      calendar-latitude      0
-      calendar-longitude     0
-      calendar-location-name "location")
-#+end_src
-
-#+begin_src emacs-lisp
 (setq user-info-file (concat user-emacs-directory "user-info.el"))
 (when (file-exists-p user-info-file)
   (load user-info-file 'noerror))
-#+end_src
 
-** remove built-in org
-We will later install the most recent (stable) version of org.
-#+begin_src emacs-lisp
 (require 'cl-seq)
 (setq load-path
       (cl-remove-if
        (lambda (x)
          (string-match-p "org$" x))
        load-path))
-#+end_src
 
-** package management
-*** straight.el and use-package
-We use [[https://github.com/raxod502/straight.el/tree/develop][straight.el]] to install packages with [[https://github.com/jwiegley/use-package][use-package]] as a "frontend".
-#+begin_src emacs-lisp
 (defvar bootstrap-version)
 (let ((bootstrap-file
        (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
@@ -123,49 +30,23 @@ We use [[https://github.com/raxod502/straight.el/tree/develop][straight.el]] to 
 ;; use use-package by default
 (setq straight-use-package-by-default t
       use-package-always-demand       t)
-#+end_src
 
-*** auto-compile
-[[https://github.com/emacscollective/auto-compile][auto-compile]] is loaded in =early-init.el= to ensure we don't load outdated byte
-code files.
-#+begin_src emacs-lisp
 (use-package auto-compile)
-#+end_src
 
-*** no-littering
-Keep =~/.emacs.d/= clean with [[https://github.com/emacscollective/no-littering][no-littering]]. Also loaded in =early-init.el=.
-#+begin_src emacs-lisp
 (use-package no-littering)
-#+end_src
 
-
-** keybindings
-*** general.el
-[[https://github.com/noctuid/general.el][general.el]] is a decent way to configure keybindings, particularly when it comes
-to various mode maps and evil. Integrates well with use-package
-#+begin_src emacs-lisp
 (use-package general
   :config
   (general-unbind
     "s-p"       ; no one needs print
     "C-x f"     ; set-fill-column is always 80
     "C-x C-n")) ; set-goal-column is just annoying
-#+end_src
 
-*** macos specific
-We set command to meta. Option is unbound due to various special character
-inputs. macos shortcut(s) that use command are moved to option (System
-Preferences > Keyboard > Shortcuts) or are simply disabled.
-#+begin_src emacs-lisp
 (setq mac-command-modifier      'meta
       mac-option-modifier       nil
       mac-right-option-modifier nil
       mac-function-modifier     nil)
-#+end_src
 
-*** which-key
-Display keybidings with [[https://github.com/justbur/emacs-which-key][which-key]].
-#+begin_src emacs-lisp
 (use-package which-key
   :config
   (setq which-key-idle-delay    0.8
@@ -173,13 +54,7 @@ Display keybidings with [[https://github.com/justbur/emacs-which-key][which-key]
         which-key-sort-order    'which-key-description-order
         which-key-prefix-prefix "+")
   (which-key-mode +1))
-#+end_src
 
-** garbage collection
-We set =gc= variables to more reasonable values at the end of =emacs-startup=.
-While we're at it we also reset =debug= and =file-name-handler-alist= from
-=early-init.el=
-#+begin_src emacs-lisp
 ;; Increase this if stuttering occurs. Decrease if freezes occurs.
 (defvar knube-gc-cons-threshold (* 64 1024 1024))
 
@@ -209,12 +84,7 @@ While we're at it we also reset =debug= and =file-name-handler-alist= from
 
             (add-hook 'minibuffer-setup-hook #'gc-minibuffer-setup-hook)
             (add-hook 'minibuffer-exit-hook #'gc-minibuffer-exit-hook)))
-#+end_src
 
-** env and path variables
-env and path variables are almost always annoying, specially in macos. in macos.
-Steve Purcell's [[https://github.com/purcell/exec-path-from-shell][exec-path-from-shell]] makes all of that a bit easier.
-#+begin_src emacs-lisp
 (use-package exec-path-from-shell
   :if (memq window-system '(mac ns))
   :config
@@ -222,12 +92,7 @@ Steve Purcell's [[https://github.com/purcell/exec-path-from-shell][exec-path-fro
   (exec-path-from-shell-copy-envs '("LANG"
                                     "LC_ALL"
                                     "PYTHONPATH")))
-#+end_src
 
-
-** crux and various keybinds
-A [[https://github.com/bbatsov/crux][*c*ollection of *r*idiculously *u*seful e*x*tensions for emacs]].
-#+begin_src emacs-lisp
 (use-package crux
   :general
   ("C-c o"   'crux-open-with)
@@ -258,21 +123,12 @@ A [[https://github.com/bbatsov/crux][*c*ollection of *r*idiculously *u*seful e*x
         (setq beg (region-beginning) end (region-end))
       (setq beg (line-beginning-position) end (line-end-position)))
     (comment-or-uncomment-region beg end)))
-#+end_src
 
-** smartparens
-Automatic symbol pairing with https://github.com/Fuco1/smartparens. Currently
-global, but we might tweak this later if it becomes annoying.
-#+begin_src emacs-lisp
 (use-package smartparens
   :config
   (require 'smartparens-config)
   (smartparens-global-mode +1))
-#+end_src
 
-** utf-8
-One locale to rule them all.
-#+begin_src emacs-lisp
 (setq utf-translate-cjk-mode nil     ; disable CJK coding/encoding
       locale-coding-system   'utf-8)
 (set-language-environment    'utf-8)
@@ -280,11 +136,7 @@ One locale to rule them all.
 (set-terminal-coding-system  'utf-8)
 (set-selection-coding-system 'utf-8)
 (prefer-coding-system        'utf-8)
-#+end_src
 
-** mouse scrolling
-This makes scrolling a bit better with the macbook touchpad.
-#+begin_src emacs-lisp
 (setq scroll-step                     1
       scroll-conservatively           101
       scroll-preserve-screen-position 'always
@@ -294,21 +146,13 @@ This makes scrolling a bit better with the macbook touchpad.
       mouse-wheel-scroll-amount       '(1 ((shift) . 1))
       mouse-wheel-progressive-speed   nil
       mouse-yank-at-point             t)
-#+end_src
 
-** start maximized
-Start emacs with a maximized frame.
-#+begin_src emacs-lisp
 (toggle-frame-maximized)
 
 (general-define-key
  "M-<f10>"   'toggle-frame-maximized
  "M-S-<f10>" 'toggle-frame-fullscreen)
-#+end_src
 
-** various unsorted stuff
-Most of this is copied from other emacs configs.
-#+begin_src emacs-lisp
 (add-hook 'prog-mode-hook   'subword-mode)
 (add-hook 'before-save-hook 'delete-trailing-whitespace)
 (add-hook 'before-save-hook
@@ -358,24 +202,14 @@ Most of this is copied from other emacs configs.
 
 (setq backup-directory-alist `((".*" . ,temporary-file-directory)))
 (setq auto-save-file-name-transforms `((".*" ,temporary-file-directory t)))
-#+end_src
 
-* ui
-Everything remotely "UI"-related goes here.
-** fonts
-Monospaced fonts makes life easier. Currently, my favorite is [[https://github.com/tonsky/FiraCode][Fira Code]].
-#+begin_src emacs-lisp
 (set-face-attribute
  'default        nil :family "Fira Code" :height 180 :weight 'light)
 (set-face-attribute
  'fixed-pitch    nil :family "Fira Code" :height 180 :weight 'light)
 (set-face-attribute
  'variable-pitch nil :family "Fira Code" :height 180 :weight 'light)
-#+end_src
 
-emacs 27 introduced the new =:extend= face attribute. In turn, this makes my
-org-blocks look weird when switching themes. This fixes it?
-#+begin_src emacs-lisp
 (defun knube/fix-org-blocks ()
   (interactive)
   (eval-after-load 'org
@@ -388,11 +222,7 @@ org-blocks look weird when switching themes. This fixes it?
       (set-face-attribute 'org-block-end-line nil :extend t
                           :underline nil :overline nil
                           :slant 'italic))))
-#+end_src
 
-** theme
-[[https://protesilaos.com/modus-themes/][modus-themes]] work just fine. We switch between light and dark theme with =<f5>=.
-#+begin_src emacs-lisp
 (use-package modus-themes
   :init
   (setq modus-themes-org-blocks     'tinted-background
@@ -408,23 +238,14 @@ org-blocks look weird when switching themes. This fixes it?
   (interactive)
   (modus-themes-toggle)
   (knube/fix-org-blocks))
-#+end_src
 
-** modeline
-*** minions
-[[https://github.com/tarsius/minions][minions]] packs all minor modes into one little icon.
-#+begin_src emacs-lisp
 (use-package minions
   :init
   (setq minions-mode-line-lighter    "☰"
         minions-mode-line-delimiters '("" . ""))
   :config
   (minions-mode +1))
-#+end_src
 
-*** telephone-line
-[[https://github.com/dbordak/telephone-line][telephone-line]] looks good
-#+begin_src emacs-lisp
 (use-package telephone-line
   :init
   (setq telephone-line-lhs
@@ -448,24 +269,11 @@ org-blocks look weird when switching themes. This fixes it?
     (display-battery-mode +1))
   (display-time-mode +1)
   (telephone-line-mode +1))
-#+end_src
 
-** writeroom
-I use [[https://github.com/joostkremers/writeroom-mode][writeroom-mode]] for an uncluttered and minimalistic writing experience.
-#+begin_src emacs-lisp
 (use-package writeroom-mode
   :general
   ("<f6>" 'writeroom-mode))
-#+end_src
 
-* evil
-Even though I've used vim in the past, I'm not one of those "hardcore
-ex-vimmers". But, modal editing is nifty and it will probably save me quite some
-time in the long run.
-
-** evil-mode and evil-collection
-Staple and must have packages, both from https://github.com/emacs-evil/
-#+begin_src emacs-lisp
 (use-package evil
   :init
   (setq evil-want-keybinding  nil
@@ -478,44 +286,22 @@ Staple and must have packages, both from https://github.com/emacs-evil/
   :after evil
   :config
   (evil-collection-init))
-#+end_src
 
-** evil-nerd-commenter
-Provides a powerful tool for commenting lines. See
-https://github.com/redguardtoo/evil-nerd-commenter for full description.
-#+begin_src emacs-lisp
 (use-package evil-nerd-commenter
   :after evil
   :config
   (evilnc-default-hotkeys))
-#+end_src
 
-*** TODO This makes some of my earlier keybindings superfluous. Go back and fix that.
-
-** evil-matchit
-Use =%= to jump between matching tags. See https://github.com/redguardtoo/evil-matchit
-#+begin_src emacs-lisp
 (use-package evil-matchit
   :after evil
   :config
   (global-evil-matchit-mode +1))
-#+end_src
 
-
-** evil-lion
-https://github.com/edkolev/evil-lion
-#+begin_src emacs-lisp
 (use-package evil-lion
   :after evil
   :config
   (evil-lion-mode +1))
-#+end_src
 
-* completion
-** emacs ui completion
-*** selectrum
-[[https://github.com/raxod502/selectrum][selectrum]] for incremental narrowing in emacs.
-#+begin_src emacs-lisp
 (use-package selectrum
   :general
   ("C-x C-z" 'selectrum-repeat)
@@ -526,11 +312,7 @@ https://github.com/edkolev/evil-lion
   :config
   (selectrum-prescient-mode +1)
   (prescient-persist-mode +1))
-#+end_src
 
-*** consult
-[[https://github.com/minad/consult][consult]] builds on emacs' [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Minibuffer-Completion.html][completing-read]]. Works well with selectrum, marginalia and embark.
-#+begin_src emacs-lisp
 ;; Example configuration for Consult
 (use-package consult
   :general
@@ -654,22 +436,14 @@ https://github.com/edkolev/evil-lion
   ;;;; 4. locate-dominating-file
   ;; (setq consult-project-root-function (lambda () (locate-dominating-file "." ".git")))
 )
-#+end_src
 
-*** marginalia
-[[https://github.com/minad/marginalia][marginalia]] adds annotations to minibuffer completions.
-#+begin_src emacs-lisp
 (use-package marginalia
   :general
   (:keymaps 'minibuffer-local-map
            "M-S-a" 'marginalia-cycle)
   :config
   (marginalia-mode +1))
-#+end_src
 
-*** embark
-[[https://github.com/oantolin/embark][embark]] provides a contextual menu through =embark-act=.
-#+begin_src emacs-lisp
 (use-package embark
   :general
   ("C-."   'embark-act
@@ -691,13 +465,7 @@ https://github.com/edkolev/evil-lion
   :after (embark consult)
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
-#+end_src
 
-** citations
-
-*** bibtex-actions
-[[https://github.com/bdarcus/bibtex-actions][bibtex-actions]] uses the framework provided above for quick and easy bibtex citations.
-#+begin_src emacs-lisp
 (setq knube/bibs '("~/Dropbox/org/bibfiles/references.bib"))
 
 (use-package citeproc)
@@ -719,14 +487,7 @@ https://github.com/edkolev/evil-lion
 
 ;; Use consult-completing-read for enhanced interface.
 (advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
-#+end_src
 
-** code completion
-*** company
-Code completion with /frecency/. [[http://company-mode.github.io/][company]] has several addons and backends, those
-will be installed and configured in their respective sections later.
-
-#+begin_src emacs-lisp
 (use-package company
   :init
   (setq company-idle-delay                0.5
@@ -745,22 +506,13 @@ will be installed and configured in their respective sections later.
 (use-package company-prescient
   :config
   (company-prescient-mode +1))
-#+end_src
 
-** yasnippet
-[[https://github.com/joaotavora/yasnippet][yasnippet]] is great for providing bigger templates for your =.tex=- or =.org=-files.
-#+begin_src emacs-lisp
 (use-package yasnippet
   :init
   (setq yas-snippet-dirs '("~/.emacs.d/snippets"))
   :config
   (yas-global-mode +1))
-#+end_src
 
-* org-mode
-org-mode is absolutely brilliant
-** org
-#+begin_src emacs-lisp
 (use-package org)
 (use-package org-contrib
   :after org
@@ -806,14 +558,7 @@ org-mode is absolutely brilliant
             "C-c C-'" 'org-edit-special)
   (:keymaps 'org-src-mode-map
             "C-c C-'" 'org-edit-src-exit))
-#+end_src
 
-** org-roam
-TODO
-** company-org-block
-[[https://github.com/xenodium/company-org-block][company-org-block]] triggers with "<" and lets me quickly find the correct
-org-block. ='auto= immediately triggers =org-edit-special=.
-#+begin_src emacs-lisp
 (use-package company-org-block
   :after (org company)
   :init
@@ -823,11 +568,7 @@ org-block. ='auto= immediately triggers =org-edit-special=.
             (lambda ()
               (add-to-list (make-local-variable 'company-backends)
                            'company-org-block))))
-#+end_src
 
-* latex
-** auctex
-#+begin_src emacs-lisp
 (straight-use-package 'auctex)
 
 (add-hook 'LaTeX-mode-hook 'reftex-mode)
@@ -854,11 +595,7 @@ org-block. ='auto= immediately triggers =org-edit-special=.
 (setq auctex-latexmk-inherit-TeX-PDF-mode t)
 
 (auctex-latexmk-setup)
-#+end_src
 
-** cdlatex
-[[https://github.com/cdominik/cdlatex][cdlatex]] is quick and simple.
-#+begin_src emacs-lisp
 (straight-use-package 'cdlatex)
 
 (add-hook 'org-mode-hook   'turn-on-org-cdlatex)
@@ -866,19 +603,6 @@ org-block. ='auto= immediately triggers =org-edit-special=.
 
 (setq cdlatex-env-alist
       '(("equation*" "\\begin{equation*}\n?\n\\end{equation*}\n" nil)))
-#+end_src
 
-** company-auctex
-company completion for auctex. Do I need this?
-#+begin_src emacs-lisp
 ;; (straight-use-package 'company-auctex)
 ;; (company-auctex-init)
-#+end_src
-
-** company-bibtex
-Not sure?
-
-* Local variables
-# Local Variables:
-# eval: (add-hook 'after-save-hook (lambda ()(org-babel-tangle)) nil t)
-# End:
