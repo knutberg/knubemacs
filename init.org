@@ -533,6 +533,7 @@ https://github.com/edkolev/evil-lion
 #+begin_src emacs-lisp
 ;; Example configuration for Consult
 (use-package consult
+  :after org
   :general
   (;; C-c bindings (mode-specific-map)
    "C-c h" 'consult-history
@@ -699,23 +700,26 @@ https://github.com/edkolev/evil-lion
 [[https://github.com/bdarcus/bibtex-actions][bibtex-actions]] uses the framework provided above for quick and easy bibtex citations.
 #+begin_src emacs-lisp
 (setq knube/bibs '("~/Dropbox/org/bibfiles/references.bib"))
-
 (use-package citeproc)
-
-(use-package citeproc-org)
-
 (use-package bibtex-actions
+  :after (embark org)
+  :config
+  (require 'oc-bibtex-actions)
+  (setq bibtex-completion-bibliography             knube/bibs
+        bibtex-completion-additional-search-fields '(doi url)
+        bibtex-actions-at-point-function           'embark-act
+        org-cite-global-bibliography               knube/bibs
+        org-cite-insert-processor                  'oc-bibtex-actions
+        org-cite-follow-processor                  'oc-bibtex-actions
+        org-cite-activate-processor                'basic)
+  (add-to-list 'embark-target-finders 'bibtex-actions-citation-key-at-point)
+  (add-to-list 'embark-keymap-alist   '(bibtex . bibtex-actions-map))
+  (add-to-list 'embark-keymap-alist   '(citation-key . bibtex-actions-buffer-map))
   :general
-  ("C-c b" 'org-cite-insert
+  ("C-c [" 'org-cite-insert
    "M-o"   'org-open-at-point)
   (:keymaps 'minibuffer-local-map
-            "M-b" 'bibtex-actions-insert-preset)
-  :after (embark org org-contrib bibtex-actions)
-  :config
-  ;; make sure to set this to ensure open commands work correctly
-  (setq bibtex-completion-additional-search-fields '(doi url)
-        bibtex-completion-bibliography             knube/bibs
-        org-cite-global-bibliography               knube/bibs))
+            "M-b" 'bibtex-actions-insert-preset))
 
 ;; Use consult-completing-read for enhanced interface.
 (advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
@@ -761,51 +765,53 @@ will be installed and configured in their respective sections later.
 org-mode is absolutely brilliant
 ** org
 #+begin_src emacs-lisp
-(use-package org)
-(use-package org-contrib
-  :after org
-  :config
-  (require 'org-cite)
-  (require 'oc-csl)
-  ;; (require 'ox-bibtex)
-  ;; (require 'ob-latex)
-  ;; (require 'ob-emacs-lisp)
+  (use-package org-contrib)
+  (use-package org
+    :config
+    (require 'oc)
+    (require 'oc-basic)
+    (require 'oc-csl)
+    (require 'oc-biblatex)
+    (require 'oc-natbib)
+    ;; (require 'ox-bibtex)
+    ;; (require 'ob-latex)
+    ;; (require 'ob-emacs-lisp)
 
-  (setq org-list-allow-alphabetical      t
-        org-fontify-whole-heading-line   t
-        org-startup-indented             nil  ; indent sections
-        org-indent-indentation-per-level 0
-        org-adapt-indentation            nil
-        org-src-tab-acts-natively        t     ; tab works as in any major mode
-        org-src-preserve-indentation     t
-        org-log-into-drawer              t     ; wtf is this?
-        org-src-fontify-natively         t     ; highlight code
-        org-log-done                     'time ; add dates on completion of TODOs
-        org-support-shift-select         t     ; select holding down shift
-        org-startup-truncated            nil
-        org-directory                    "~/Dropbox/org"
-        org-agenda-files                 '("~/Dropbox/org/agenda")
-        org-ellipsis                     " ⤵"
-        org-src-window-setup             'current-window
-        org-latex-pdf-process            (list "latexmk -xelatex -f %f"))
+    (setq org-list-allow-alphabetical      t
+          org-fontify-whole-heading-line   t
+          org-startup-indented             nil  ; indent sections
+          org-indent-indentation-per-level 0
+          org-adapt-indentation            nil
+          org-src-tab-acts-natively        t     ; tab works as in any major mode
+          org-src-preserve-indentation     t
+          org-log-into-drawer              t     ; wtf is this?
+          org-src-fontify-natively         t     ; highlight code
+          org-log-done                     'time ; add dates on completion of TODOs
+          org-support-shift-select         t     ; select holding down shift
+          org-startup-truncated            nil
+          org-directory                    "~/Dropbox/org"
+          org-agenda-files                 '("~/Dropbox/org/agenda")
+          org-ellipsis                     " ⤵"
+          org-src-window-setup             'current-window
+          org-latex-pdf-process            (list "latexmk -xelatex -f %f"))
 
-  (add-hook 'org-mode-hook (lambda ()
-                             (add-to-list 'org-structure-template-alist
-                                          '("se" . "src emacs-lisp"))))
+    (add-hook 'org-mode-hook (lambda ()
+                               (add-to-list 'org-structure-template-alist
+                                            '("se" . "src emacs-lisp"))))
 
-  (org-babel-do-load-languages 'org-babel-load-languages
-                               '((emacs-lisp . t)
-                                 (latex      . t)))
-  (general-unbind
-    :keymaps 'org-mode-map
-    "C-c '"  ; redefined below
-    "C-c [") ; I have no need to "put whatever to the front of the agenda"
+    (org-babel-do-load-languages 'org-babel-load-languages
+                                 '((emacs-lisp . t)
+                                   (latex      . t)))
+    (general-unbind
+      :keymaps 'org-mode-map
+      "C-c '"  ; redefined below
+      "C-c [") ; I have no need to "put whatever to the front of the agenda"
 
-  :general
-  (:keymaps 'org-mode-map
-            "C-c C-'" 'org-edit-special)
-  (:keymaps 'org-src-mode-map
-            "C-c C-'" 'org-edit-src-exit))
+    :general
+    (:keymaps 'org-mode-map
+              "C-c C-'" 'org-edit-special)
+    (:keymaps 'org-src-mode-map
+              "C-c C-'" 'org-edit-src-exit))
 #+end_src
 
 ** org-roam

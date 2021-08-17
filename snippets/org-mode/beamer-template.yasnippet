@@ -1,8 +1,6 @@
 # -*- mode: snippet -*-
-# name: beamer-metropolis-template
-# uuid:
+# name: beamer-template
 # key: <beam
-# condition: t
 # --
 #+TITLE: ${1:Tittel}
 #+SUBTITLE: ${2:Undertittel}
@@ -22,7 +20,7 @@
 #+LATEX_HEADER: \usepackage{tikz-cd}
 #+LATEX_HEADER: \usepackage[norsk]{babel}
 #+LATEX_HEADER: \usepackage{csquotes}
-#+LATEX_HEADER: \usepackage[natbibapa]{apacite}
+#+LATEX_HEADER: \usepackage[style=apa,sortcites=true,sorting=nyt,backend=biber,autocite=inline]{biblatex}
 
 #+LATEX_HEADER: \usetheme{metropolis}
 #+LATEX_HEADER: \usefonttheme{professionalfonts}
@@ -37,6 +35,10 @@
 #+LATEX_HEADER: \setbeamertemplate{logo}{}
 #+LATEX_HEADER: \setbeamertemplate{frametitle continuation}{(\insertcontinuationcount)}
 
+#+bibliography: ~/Dropbox/org/bibfiles/references.bib
+#+cite_export: biblatex apa
+
+
 * ${4:Første slide}
 
 * Referanser
@@ -44,5 +46,4 @@
   :BEAMER_OPT: fragile,allowframebreaks
   :END:
   #+LATEX:\renewcommand{\section}[2]{}
-  bibliographystyle:apacite
-  bibliography:referanser.bib
+  #+print_bibliography:

@@ -22,16 +22,15 @@
 #+LATEX_HEADER: \usepackage[norsk]{babel}
 #+LATEX_HEADER: \usepackage{csquotes}
 #+LATEX_HEADER: \usepackage{fullpage}
-#+LATEX_HEADER: \usepackage[natbibapa]{apacite}
+#+LATEX_HEADER: \usepackage[style=apa,sortcites=true,sorting=nyt,backend=biber,autocite=inline]{biblatex}
 
 #+LATEX_HEADER: \hypersetup{colorlinks=true,urlcolor=[RGB]{0 84 147},citecolor=[RGB]{0 144 81}}
 
+#+bibliography: ~/Dropbox/org/bibfiles/references.bib
+#+cite_export: biblatex apa
+
+
+
 * ${4:Første tittel}
 
-* Referanser
-  :PROPERTIES:
-  :BEAMER_OPT: fragile,allowframebreaks
-  :END:
-  #+LATEX:\renewcommand{\section}[2]{}
-  bibliographystyle:apacite
-  bibliography:referanser.bib
+#+print_bibliography:
