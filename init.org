@@ -395,6 +395,12 @@ org-blocks look weird when switching themes. This fixes it?
   (knube/fix-org-blocks))
 #+end_src
 
+** [[https://github.com/emacs-dashboard/emacs-dashboard][emacs-dashboard]]
+#+begin_src emacs-lisp
+(straight-use-package 'dashboard)
+(dashboard-setup-startup-hook)
+#+end_src
+
 ** modeline
 *** minions
 [[https://github.com/tarsius/minions][minions]] packs all minor modes into one little icon.
@@ -579,7 +585,7 @@ org-mode is absolutely brilliant
       org-support-shift-select         t     ; select holding down shift
       org-startup-truncated            nil
       org-directory                    "~/Dropbox/org"
-      org-agenda-files                 '("~/Dropbox/org/agenda")
+      org-agenda-files                 '("~/Dropbox/org/agenda/")
       org-ellipsis                     " ⤵"
       org-src-window-setup             'current-window
       org-latex-pdf-process            (list "latexmk -xelatex -f %f"))
@@ -616,7 +622,7 @@ Works in org-mode!
 #+begin_src emacs-lisp
 (setq knube/bibs '("~/Dropbox/org/bibs/references.bib"))
 (straight-use-package 'citeproc)
-(straight-use-package 'bibtex-actions)
+(straight-use-package '(bibtex-actions :type git :host github :repo "bdarcus/bibtex-actions"))
 
 (require 'oc-bibtex-actions)
 (setq bibtex-completion-bibliography             knube/bibs

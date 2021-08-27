@@ -231,6 +231,9 @@
   (modus-themes-toggle)
   (knube/fix-org-blocks))
 
+(straight-use-package 'dashboard)
+(dashboard-setup-startup-hook)
+
 (straight-use-package 'minions)
 
 (setq minions-mode-line-lighter    "☰"
@@ -370,7 +373,7 @@
       org-support-shift-select         t     ; select holding down shift
       org-startup-truncated            nil
       org-directory                    "~/Dropbox/org"
-      org-agenda-files                 '("~/Dropbox/org/agenda")
+      org-agenda-files                 '("~/Dropbox/org/agenda/")
       org-ellipsis                     " ⤵"
       org-src-window-setup             'current-window
       org-latex-pdf-process            (list "latexmk -xelatex -f %f"))
@@ -393,7 +396,7 @@
 
 (setq knube/bibs '("~/Dropbox/org/bibs/references.bib"))
 (straight-use-package 'citeproc)
-(straight-use-package 'bibtex-actions)
+(straight-use-package '(bibtex-actions :type git :host github :repo "bdarcus/bibtex-actions"))
 
 (require 'oc-bibtex-actions)
 (setq bibtex-completion-bibliography             knube/bibs
