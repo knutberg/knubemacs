@@ -40,3 +40,4 @@
     (add-to-list 'recentf-exclude no-littering-etc-directory)))
 
 (setq-default evil-want-keybinding nil)
+(setq-default evil-want-integration t)

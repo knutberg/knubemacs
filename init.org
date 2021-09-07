@@ -3,10 +3,8 @@ My personal emacs configuration made for macos running on a macbook. It doesn't
 have any version or os checks, so you should probably adapt this for your own
 setup if you want to use it.
 
-
-* startup and quality of life
+* Startup and quality of life
 Section for basic emacs settings and various "quality of life"-stuff.
-
 ** early-init.el
 This subsection tangles =~/.emacs.d/early-init.el= which is loaded before
 =init.el= or any package or UI initialization. It's not a *big deal*, but it
@@ -65,6 +63,7 @@ We also invoke the [[https://www.gnu.org/software/emacs/manual/html_node/elisp/E
     (add-to-list 'recentf-exclude no-littering-etc-directory)))
 
 (setq-default evil-want-keybinding nil)
+(setq-default evil-want-integration t)
 #+end_src
 
 ** custom.el
@@ -103,7 +102,7 @@ We will later install the most recent (stable) version of org.
 #+end_src
 
 ** package management
-*** straight.el and use-package
+*** straight.el
 We use [[https://github.com/raxod502/straight.el/tree/develop][straight.el]] to install packages.
 #+begin_src emacs-lisp
 (defvar bootstrap-version)
@@ -119,8 +118,6 @@ We use [[https://github.com/raxod502/straight.el/tree/develop][straight.el]] to 
       (goto-char (point-max))
       (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
-
-(straight-use-package 'use-package)
 #+end_src
 
 *** auto-compile
@@ -136,26 +133,13 @@ Keep =~/.emacs.d/= clean with [[https://github.com/emacscollective/no-littering]
 (straight-use-package 'no-littering)
 #+end_src
 
-*** macos specific
-We set command to meta. Option is unbound due to various special character
-inputs. macos shortcut(s) that use command are moved to option (System
-Preferences > Keyboard > Shortcuts) or are simply disabled.
+** reload config and restart-emacs
+Bound to =SPC q q= and =SPC q r= later.
 #+begin_src emacs-lisp
-(setq mac-command-modifier      'meta
-      mac-option-modifier       nil
-      mac-right-option-modifier nil
-      mac-function-modifier     nil)
-#+end_src
-
-*** which-key
-Display keybidings with [[https://github.com/justbur/emacs-which-key][which-key]].
-#+begin_src emacs-lisp
-(straight-use-package 'which-key)
-(setq which-key-idle-delay    0.5
-      which-key-separator     " "
-      which-key-sort-order    'which-key-description-order
-      which-key-prefix-prefix "+")
-(which-key-mode +1)
+(straight-use-package 'restart-emacs)
+(defun knube/reload-config ()
+  (interactive)
+  (load-file user-init-file))
 #+end_src
 
 ** garbage collection
@@ -206,44 +190,6 @@ Steve Purcell's [[https://github.com/purcell/exec-path-from-shell][exec-path-fro
                                   "PYTHONPATH"))
 #+end_src
 
-
-** crux and various keybinds
-A [[https://github.com/bbatsov/crux][*c*ollection of *r*idiculously *u*seful e*x*tensions for emacs]].
-#+begin_src emacs-lisp
-(straight-use-package 'crux)
-;; todo: more keybindings to add? need to go through and see what should be
-;; remapped
-
-(global-set-key (kbd "C-c o")     'crux-open-with)
-(global-set-key [remap kill-line] 'crux-smart-kill-line) ; C-k
-(global-set-key (kbd "C-S-RET")   'crux-smart-open-line-above)
-(global-set-key (kbd "S-RET")     'crux-smart-open-line)
-(global-set-key (kbd "C-c n")     'crux-cleanup-buffer-or-region)
-(global-set-key (kbd "C-c f")     'crux-recentf-find-file)
-(global-set-key (kbd "C-c F")     'crux-recentf-find-directory)
-(global-set-key (kbd "C-c e")     'crux-eval-and-replace)
-(global-set-key (kbd "C-c D")     'crux-delete-file-and-buffer)
-(global-set-key (kbd "M-/")       'hippie-expand)
-(global-set-key (kbd "C-x C-b")   'ibuffer)
-(global-set-key (kbd "M-z")       'zap-up-to-char)
-(global-set-key (kbd "C-s")       'isearch-forward-regexp)
-(global-set-key (kbd "C-r")       'isearch-backward-regexp)
-(global-set-key (kbd "C-M-s")     'isearch-forward)
-(global-set-key (kbd "C-M-r")     'isearch-backward)
-(global-set-key (kbd "M-;")       'knube/comment-or-uncomment)
-
-(autoload 'zap-up-to-char "misc"
-  "Kill up to, but not including ARGth occurrence of CHAR." t)
-
-(defun knube/comment-or-uncomment ()
-  (interactive)
-  (let (beg end)
-    (if (region-active-p)
-        (setq beg (region-beginning) end (region-end))
-      (setq beg (line-beginning-position) end (line-end-position)))
-    (comment-or-uncomment-region beg end)))
-#+end_src
-
 ** smartparens
 Automatic symbol pairing with https://github.com/Fuco1/smartparens. Currently
 global, but we might tweak this later if it becomes annoying.
@@ -280,21 +226,14 @@ This makes scrolling a bit better with the macbook touchpad.
 #+end_src
 
 ** start maximized
-Start emacs with a maximized frame.
+Start emacs with a maximized frame. Bound to =SPC t m= later.
 #+begin_src emacs-lisp
 (add-hook 'emacs-startup-hook 'toggle-frame-maximized)
-
-(global-set-key (kbd "M-<f10>")   'toggle-frame-maximized)
-(global-set-key (kbd "M-S-<f10>") 'toggle-frame-fullscreen)
 #+end_src
 
 ** various unsorted stuff
 Most of this is copied from other emacs configs.
 #+begin_src emacs-lisp
-(global-unset-key (kbd "s-p"))     ; no one needs print
-(global-unset-key (kbd "C-x f"))   ; set-fill-column is always 80
-(global-unset-key (kbd "C-x C-n")) ; set-goal-column is just annoying
-
 (add-hook 'prog-mode-hook   'subword-mode)
 (add-hook 'before-save-hook 'delete-trailing-whitespace)
 (add-hook 'before-save-hook
@@ -346,17 +285,107 @@ Most of this is copied from other emacs configs.
 (setq auto-save-file-name-transforms `((".*" ,temporary-file-directory t)))
 #+end_src
 
-* ui
+* evil-mode
+I'm still the process of learning evil-mode, and this is most definitely a work
+in progress. See https://github.com/noctuid/evil-guide for more. Some of the
+packages are for a certain mode (org-mode, latex-mode etc.) and those are added
+in the appropriate section below.
+** TODO Big list
+1) Add the appropriate hooks for evil-embrace (LaTeX-mode and org-mode?)
+2) Exemplify what the packages actually do
+3) Take a look at doom emacs and see if I can adopt something?
+
+** [[https://github.com/emacs-evil/evil][evil]]
+#+begin_src emacs-lisp
+(straight-use-package 'undo-fu) ;; move this!
+(straight-use-package 'evil)
+(setq evil-want-integration t ;; This is optional since it's already set to t by default.
+      evil-want-keybinding  nil
+      evil-want-fine-undo   t
+      evil-undo-system      'undo-fu)
+(evil-mode +1)
+#+end_src
+
+** [[https://github.com/emacs-evil/evil-collection][evil-collection]]
+#+begin_src emacs-lisp
+(straight-use-package 'evil-collection)
+(evil-collection-init)
+#+end_src
+
+** [[https://github.com/emacs-evil/evil-surround][evil-surround]]
+#+begin_src emacs-lisp
+(straight-use-package 'evil-surround)
+(global-evil-surround-mode +1)
+#+end_src
+
+** [[https://github.com/cute-jumper/evil-embrace.el][evil-embrace]]
+#+begin_src emacs-lisp
+(straight-use-package 'evil-embrace)
+(evil-embrace-enable-evil-surround-integration)
+#+end_src
+
+** [[https://github.com/edkolev/evil-lion][evil-lion]]
+#+begin_src emacs-lisp
+(straight-use-package 'evil-lion)
+(evil-lion-mode +1)
+#+end_src
+
+** [[https://github.com/redguardtoo/evil-nerd-commenter][evil-nerd-commenter]]
+#+begin_src emacs-lisp
+(straight-use-package 'evil-nerd-commenter)
+(evilnc-default-hotkeys)
+#+end_src
+
+** [[https://github.com/expez/evil-smartparens/][evil-smartparens]]
+#+begin_src emacs-lisp
+(straight-use-package 'evil-smartparens)
+(add-hook 'smartparens-enabled-hook #'evil-smartparens-mode)
+#+end_src
+
+* keybindings
+** [[https://github.com/noctuid/general.el][general.el]]
+general.el works well with [[*evil-mode]] and provides a decent way of configuring
+leader keys. Note that all [[*Keybindings]] are exiled at the very end of this file.
+#+begin_src emacs-lisp
+(straight-use-package 'general)
+(general-auto-unbind-keys)
+#+end_src
+
+** macos specific stuff
+We set command to meta. Option is unbound due to various special character
+inpüts. macos shortcut(s) that use command are moved to option (System
+Preferences > Keyboard > Shortcuts) or are simply disabled.
+#+begin_src emacs-lisp
+(setq mac-command-modifier      'meta
+      mac-option-modifier       nil
+      mac-right-option-modifier nil
+      mac-function-modifier     nil)
+#+end_src
+
+** which-key
+Display keybidings with [[https://github.com/justbur/emacs-which-key][which-key]].
+#+begin_src emacs-lisp
+(straight-use-package 'which-key)
+(setq which-key-idle-delay    0.5
+      which-key-separator     " "
+      which-key-sort-order    'which-key-description-order
+      which-key-prefix-prefix "+")
+(which-key-mode +1)
+#+end_src
+
+** [[https://github.com/bbatsov/crux][crux]]
+#+begin_src emacs-lisp
+(straight-use-package 'crux)
+#+end_src
+
+* UI
 Everything remotely "UI"-related goes here.
 ** fonts
-Monospaced fonts makes life easier. Currently, my favorite is [[https://github.com/tonsky/FiraCode][Fira Code]].
+Monospaced fonts makes life easier. Currently, my favorite is [[https://github.com/be5invis/Iosevka][Iosevka]] for everything.
 #+begin_src emacs-lisp
-(set-face-attribute
- 'default        nil :family "Fira Code" :height 180 :weight 'light)
-(set-face-attribute
- 'fixed-pitch    nil :family "Fira Code" :height 180 :weight 'light)
-(set-face-attribute
- 'variable-pitch nil :family "Fira Code" :height 180 :weight 'light)
+(set-face-attribute 'default        nil :family "Iosevka"  :height 180 :weight 'light)
+(set-face-attribute 'fixed-pitch    nil :family "Iosevka"  :height 180 :weight 'light)
+(set-face-attribute 'variable-pitch nil :family "Iosevka"  :height 180 :weight 'light)
 #+end_src
 
 emacs 27 introduced the new =:extend= face attribute. In turn, this makes my
@@ -376,23 +405,25 @@ org-blocks look weird when switching themes. This fixes it?
                           :slant 'italic))))
 #+end_src
 
-** theme
-[[https://protesilaos.com/modus-themes/][modus-themes]] work just fine. We switch between light and dark theme with =<f5>=.
+** [[https://protesilaos.com/modus-themes/][modus-themes]]
+We switch between light and dark theme with =SPC t t=.
 #+begin_src emacs-lisp
 (straight-use-package 'modus-themes)
 
 (setq modus-themes-org-blocks     'tinted-background
       modus-themes-scale-headings t)
+
 (modus-themes-load-themes)
-(modus-themes-load-operandi)
+;(modus-themes-load-operandi)
+
+(require 'solar)
+(straight-use-package 'circadian)
+
+(setq circadian-themes '((:sunrise . modus-operandi)
+                         (:sunset  . modus-vivendi)))
+(circadian-setup)
+
 (knube/fix-org-blocks)
-
-(global-set-key (kbd "<f5>") 'knube/toggle-themes)
-
-(defun knube/toggle-themes ()
-  (interactive)
-  (modus-themes-toggle)
-  (knube/fix-org-blocks))
 #+end_src
 
 ** [[https://github.com/emacs-dashboard/emacs-dashboard][emacs-dashboard]]
@@ -402,8 +433,8 @@ org-blocks look weird when switching themes. This fixes it?
 #+end_src
 
 ** modeline
-*** minions
-[[https://github.com/tarsius/minions][minions]] packs all minor modes into one little icon.
+*** [[https://github.com/tarsius/minions][minions]]
+Conveniently stuffs all minor modes into one little icon.
 #+begin_src emacs-lisp
 (straight-use-package 'minions)
 
@@ -413,8 +444,7 @@ org-blocks look weird when switching themes. This fixes it?
 (minions-mode +1)
 #+end_src
 
-*** telephone-line
-[[https://github.com/dbordak/telephone-line][telephone-line]] looks good
+*** [[https://github.com/dbordak/telephone-line][telephone-line]]
 #+begin_src emacs-lisp
 (straight-use-package 'telephone-line)
 
@@ -443,50 +473,44 @@ org-blocks look weird when switching themes. This fixes it?
 (telephone-line-mode +1)
 #+end_src
 
-** writeroom
-I use [[https://github.com/joostkremers/writeroom-mode][writeroom-mode]] for an uncluttered and minimalistic writing experience.
+** [[https://github.com/joostkremers/writeroom-mode][writeroom-mode]]
+For an uncluttered and minimalistic writing experience.
 #+begin_src emacs-lisp
 (straight-use-package 'writeroom-mode)
-(global-set-key (kbd "<f6>") 'writeroom-mode)
 #+end_src
 
-** emacs ui completion
+* Completion
+** emacs completion
+*** [[https://github.com/raxod502/selectrum][selectrum]]
+#+begin_src emacs-lisp
+(straight-use-package 'selectrum)
+(straight-use-package 'selectrum-prescient)
+
+(selectrum-mode +1)
+(selectrum-prescient-mode +1)
+(prescient-persist-mode +1)
+#+end_src
+
 *** consult
 [[https://github.com/minad/consult][consult]] builds on emacs' [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Minibuffer-Completion.html][completing-read]]
 #+begin_src emacs-lisp
 (straight-use-package 'consult)
-;; todo: one gazillion keybindings
-#+end_src
-
-*** [[https://github.com/minad/vertico][vertico]]
-#+begin_src emacs-lisp
-(straight-use-package 'vertico)
-(vertico-mode)
-
-(straight-use-package 'orderless)
-(setq completion-styles             '(orderless)
-      completion-category-defaults  nil
-      completion-category-overrides '((file (styles partial-completion))))
-
-;; Persist history over emacs restart
-(savehist-mode +1)
-
-(defun crm-indicator (args)
-  (cons (concat "[CRM] " (car args)) (cdr args)))
-(advice-add #'completing-read-multiple :filter-args #'crm-indicator)
-
-;; Do not allow the cursor in the minibuffer prompt
-(setq minibuffer-prompt-properties
-      '(read-only t cursor-intangible t face minibuffer-prompt))
-(add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
-
-;; Emacs 28: Hide commands in M-x which do not work in the current mode.
-;; Vertico commands are hidden in normal buffers.
-;; (setq read-extended-command-predicate
-;;       #'command-completion-default-include-p)
-
-;; Enable recursive minibuffers
-(setq enable-recursive-minibuffers t)
+(general-define-key
+ [remap apropos]                       #'consult-apropos
+ [remap bookmark-jump]                 #'consult-bookmark
+ [remap evil-show-marks]               #'consult-mark
+ [remap evil-show-jumps]               #'+vertico/jump-list
+ [remap goto-line]                     #'consult-goto-line
+ [remap imenu]                         #'consult-imenu
+ [remap locate]                        #'consult-locate
+ [remap load-theme]                    #'consult-theme
+ [remap man]                           #'consult-man
+ [remap recentf-open-files]            #'consult-recent-file
+ [remap switch-to-buffer]              #'consult-buffer
+ [remap switch-to-buffer-other-window] #'consult-buffer-other-window
+ [remap switch-to-buffer-other-frame]  #'consult-buffer-other-frame
+ [remap yank-pop]                      #'consult-yank-pop
+ [remap persp-switch-to-buffer]        #'+vertico/switch-workspace-buffer)
 #+end_src
 
 *** marginalia
@@ -504,9 +528,6 @@ I use [[https://github.com/joostkremers/writeroom-mode][writeroom-mode]] for an 
 #+begin_src emacs-lisp
 (straight-use-package 'embark)
 
-(global-set-key (kbd "C-.")   'embark-act)
-(global-set-key (kbd "C-;")   'embark-dwim)     ; good alternative: M-.
-(global-set-key (kbd "C-h B") 'embark-bindings) ; embark's `describe-bindings'
 
 ;; Optionally replace the key help with a completing-read interface
 (setq prefix-help-command #'embark-prefix-help-command)
@@ -520,12 +541,10 @@ I use [[https://github.com/joostkremers/writeroom-mode][writeroom-mode]] for an 
 #+end_src
 
 ** code completion
-*** company
-Code completion with /frecency/. [[http://company-mode.github.io/][company]] has several addons and backends, those
-will be installed and configured in their respective sections later.
-
+*** [[http://company-mode.github.io/][company-mode]]
 #+begin_src emacs-lisp
 (straight-use-package 'company)
+(straight-use-package 'company-prescient)
 
 (setq company-idle-delay                0.5
       company-show-numbers              t
@@ -538,16 +557,10 @@ will be installed and configured in their respective sections later.
       company-tooltip-flip-when-above   t)
 
 (global-company-mode +1)
-
-
-(straight-use-package 'company-prescient)
-
 (company-prescient-mode +1)
 #+end_src
 
-** yasnippet
-[[https://github.com/joaotavora/yasnippet][yasnippet]] is great for providing bigger templates for your =.tex=- or
-=.org=-files.
+** [[https://github.com/joaotavora/yasnippet][yasnippet]]
 #+begin_src emacs-lisp
 (straight-use-package 'yasnippet)
 
@@ -557,20 +570,12 @@ will be installed and configured in their respective sections later.
 #+end_src
 
 * org-mode
-org-mode is absolutely brilliant
+org-mode is absolutely brilliant. Currently this section is a bit
+/all-over-the-place/ and needs a proper "cleaning".
 ** org
 #+begin_src emacs-lisp
 (straight-use-package 'org-contrib)
 (straight-use-package 'org)
-
-(require 'oc)
-(require 'oc-basic)
-(require 'oc-csl)
-(require 'oc-biblatex)
-(require 'oc-natbib)
-;; (require 'ox-bibtex)
-;; (require 'ob-latex)
-;; (require 'ob-emacs-lisp)
 
 (setq org-list-allow-alphabetical      t
       org-fontify-whole-heading-line   t
@@ -599,10 +604,10 @@ org-mode is absolutely brilliant
                                (latex      . t)))
 #+end_src
 
-** org-roam
-TODO
-** company-org-block
-[[https://github.com/xenodium/company-org-block][company-org-block]] triggers with "<" and lets me quickly find the correct
+** org-roam TODO
+** org-noter TODO
+** [[https://github.com/xenodium/company-org-block][company-org-block]]
+Triggers with "<" and lets us quickly find the correct
 org-block. ='auto= immediately triggers =org-edit-special=.
 #+begin_src emacs-lisp
 (straight-use-package 'company-org-block)
@@ -614,17 +619,34 @@ org-block. ='auto= immediately triggers =org-edit-special=.
                                         'company-org-block)))
 #+end_src
 
-* citations
+** [[https://github.com/Somelauw/evil-org-mode][evil-org]]
+#+begin_src emacs-lisp
+(straight-use-package 'evil-org)
+(add-hook 'org-mode-hook
+  (lambda ()
+     (evil-org-mode)
+     (evil-org-set-key-theme '(navigation insert textobjects additional calendar))
+     (require 'evil-org-agenda)
+     (evil-org-agenda-set-keys)))
+#+end_src
 
+* Citations
 ** bibtex-actions
 [[https://github.com/bdarcus/bibtex-actions][bibtex-actions]] uses emacs' [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Minibuffer-Completion.html][completing-read]] for a convenient citation system.
 Works in org-mode!
 #+begin_src emacs-lisp
 (setq knube/bibs '("~/Dropbox/org/bibs/references.bib"))
+
 (straight-use-package 'citeproc)
 (straight-use-package '(bibtex-actions :type git :host github :repo "bdarcus/bibtex-actions"))
 
+(require 'oc)
+(require 'oc-basic)
+(require 'oc-csl)
+(require 'oc-biblatex)
+(require 'oc-natbib)
 (require 'oc-bibtex-actions)
+
 (setq bibtex-completion-bibliography             knube/bibs
       bibtex-completion-additional-search-fields '(doi url)
       bibtex-actions-at-point-function           'embark-act
@@ -637,16 +659,12 @@ Works in org-mode!
 (add-to-list 'embark-keymap-alist   '(bibtex . bibtex-actions-map))
 (add-to-list 'embark-keymap-alist   '(citation-key . bibtex-actions-buffer-map))
 
-(define-key org-mode-map         (kbd "C-c b") 'org-cite-insert)
-(define-key org-mode-map         (kbd "M-o")   'org-open-at-point)
-(define-key minibuffer-local-map (kbd "M-b")   'bibtex-actions-insert-preset)
-
 ;; Use consult-completing-read for enhanced interface.
 (advice-add #'completing-read-multiple
             :override #'consult-completing-read-multiple)
 #+end_src
 
-* latex
+* LaTeX
 ** auctex
 #+begin_src emacs-lisp
 (straight-use-package 'auctex)
@@ -677,8 +695,7 @@ Works in org-mode!
 (auctex-latexmk-setup)
 #+end_src
 
-** cdlatex
-[[https://github.com/cdominik/cdlatex][cdlatex]] is quick and simple.
+** [[https://github.com/cdominik/cdlatex][cdlatex]]
 #+begin_src emacs-lisp
 (straight-use-package 'cdlatex)
 
@@ -689,15 +706,181 @@ Works in org-mode!
       '(("equation*" "\\begin{equation*}\n?\n\\end{equation*}\n" nil)))
 #+end_src
 
-** company-auctex and company mathtex?
-company completion for auctex. Do I need this?
+** [[https://github.com/iyefrat/evil-tex][evil-tex]]
 #+begin_src emacs-lisp
-;; (straight-use-package 'company-auctex)
-;; (company-auctex-init)
+(straight-use-package 'evil-tex)
+(add-hook 'LaTeX-mode-hook #'evil-tex-mode)
 #+end_src
 
-** company-bibtex
-Not sure?
+** company-auctex DISABLED
+company completion for auctex. Do I need this?
+#+begin_src emacs-lisp :tangle no
+(straight-use-package 'company-auctex)
+(company-auctex-init)
+#+end_src
+
+** [[https://github.com/vspinu/company-math][company-math]] DISABLED
+#+begin_src emacs-lisp :tangle no
+(straight-use-package 'company-math)
+(add-to-list 'company-backends 'company-math-symbols-unicode)
+;; (add-hook 'LaTeX-mode-hook
+;;           (lambda ()
+;;             (setq-local company-backends
+;;                         (append '((company-math-symbols-latex company-latex-commands))
+;;                                 company-backends))))
+#+end_src
+
+* COMMENT Keybindings
+To keep track of all my keybindings I collect and sort them at the end of my config.
+** Unbinds
+#+begin_src emacs-lisp
+(general-unbind
+  "s-p"      ; no one needs print
+  "C-x f"    ; set-fill-column is always 80
+  "C-x C-n") ; set-goal-column is just annoying
+#+end_src
+
+** Leader keys
+#+begin_src emacs-lisp
+(general-create-definer knube/spc-leader
+  :states '(normal insert visual emacs)
+  :prefix "SPC"
+  :non-normal-prefix "M-SPC")
+
+(general-create-definer knube/local-spc-leader
+  :states '(normal insert visual emacs)
+  :prefix "SPC m"
+  :non-normal-prefix "M-SPC m")
+
+(knube/local-spc-leader
+  "" '(:which-key "local" :ignore))
+#+end_src
+
+** SPC
+#+begin_src emacs-lisp
+(knube/spc-leader
+  "SPC" '(execute-extended-command :which-key "M-x")
+  "a" 'embark-act
+  "A" 'embark-dwim
+  "z" 'selectrum-repeat)
+#+end_src
+
+** SPC f (file)
+#+begin_src emacs-lisp
+(knube/spc-leader
+  "f"   '(:which-key "file" :ignore)
+  "f o" 'crux-open-with
+  "f f" 'find-file
+  "f r" 'crux-recentf-find-file
+  "f R" 'crux-recentf-find-directory
+  "f p" 'knube/load-config
+  "f s" 'save-buffer
+  "f w" 'write-file)
+
+(defun knube/load-config ()
+  (interactive)
+  (find-file (concat user-emacs-directory "init.org")))
+#+end_src
+
+** SPC e (edit)
+#+begin_src emacs-lisp
+(knube/spc-leader
+  "e"   '(:which-key "edit" :ignore)
+  "e n" 'crux-cleanup-buffer-or-region
+  "e e" 'crux-eval-and-replace
+  "e z" 'zap-up-to-char)
+
+(autoload 'zap-up-to-char "misc"
+  "Kill up to, but not including ARGth occurrence of CHAR." t)
+#+end_src
+
+** SPC s (search)
+#+begin_src emacs-lisp
+(knube/spc-leader
+  "s"   '(:which-key "search" :ignore)
+  "s s" 'isearch-forward-regexp
+  "s S" 'isearch-forward
+  "s r" 'isearch-backward-regexp
+  "s R" 'isearch-backward)
+#+end_src
+
+** SPC b (buffer)
+#+begin_src emacs-lisp
+(knube/spc-leader
+  "b"   '(:which-key "buffer" :ignore)
+  "b b" 'consult-buffer
+  "b B" 'ibuffer
+  "b D" 'crux-delete-file-and-buffer
+  "b R" 'crux-rename-file-and-buffer
+  "b k" 'crux-kill-other-buffers
+  "b n" 'crux-cleanup-buffer-or-region)
+#+end_src
+
+** SPC q (quit)
+#+begin_src emacs-lisp
+(knube/spc-leader
+  "q"   '(:which-key "quit" :ignore)
+  "q q" 'exit-emacs
+  "q r" 'restart-emacs
+  "q l" 'knube/reload-config)
+#+end_src
+
+** SPC t (toggle)
+#+begin_src emacs-lisp
+(knube/spc-leader
+  "t" '(:which-key "toggle" :ignore)
+  "t t" 'knube/toggle-themes
+  "t T" 'consult-theme
+  "t f" 'toggle-frame-fullscreen
+  "t m" 'toggle-frame-maximized
+  "t w" 'writeroom-mode)
+
+(defun knube/toggle-themes ()
+  (interactive)
+  (modus-themes-toggle)
+  (knube/fix-org-blocks))
+#+end_src
+
+** crux bindings
+#+begin_src emacs-lisp
+(general-define-key
+ [remap kill-line] 'crux-smart-kill-line ; C-k
+ "C-S-RET"         'crux-smart-open-line-above
+ "S-RET"           'crux-smart-open-line
+ "M-/"             'hippie-expand)
+#+end_src
+
+** embark
+#+begin_src emacs-lisp
+(general-define-key
+ "C-."   'embark-act
+ "C-;"   'embark-dwim     ; good alternative: M-.
+ "C-h B" 'embark-bindings) ; embark's `describe-bindings'
+#+end_src
+
+** org-mode
+#+begin_src emacs-lisp
+(knube/local-spc-leader
+  :keymaps 'org-mode-map
+  :states '(normal insert)
+  "'" 'org-edit-special
+  "b" 'org-cite-insert ;; todo: expand this into a menu
+  "l" 'org-insert-link
+  "e" 'org-export-dispatch
+  "{" 'org-cdlatex-environment-indent)
+#+end_src
+*** org-src-mode
+#+begin_src emacs-lisp
+(knube/local-spc-leader
+  :keymaps 'org-src-mode-map
+  :states '(normal insert)
+  "'" 'org-edit-src-exit
+  "{" 'org-cdlatex-environment-indent)
+#+end_src
+
+
+* Keybindings and hydras
+
 
 * Local variables
 # Local Variables:

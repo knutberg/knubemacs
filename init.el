@@ -27,23 +27,14 @@
       (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
 
-(straight-use-package 'use-package)
-
 (straight-use-package' auto-compile)
 
 (straight-use-package 'no-littering)
 
-(setq mac-command-modifier      'meta
-      mac-option-modifier       nil
-      mac-right-option-modifier nil
-      mac-function-modifier     nil)
-
-(straight-use-package 'which-key)
-(setq which-key-idle-delay    0.5
-      which-key-separator     " "
-      which-key-sort-order    'which-key-description-order
-      which-key-prefix-prefix "+")
-(which-key-mode +1)
+(straight-use-package 'restart-emacs)
+(defun knube/reload-config ()
+  (interactive)
+  (load-file user-init-file))
 
 ;; Increase this if stuttering occurs. Decrease if freezes occurs.
 (defvar knube-gc-cons-threshold (* 64 1024 1024))
@@ -82,39 +73,6 @@
                                   "LC_ALL"
                                   "PYTHONPATH"))
 
-(straight-use-package 'crux)
-;; todo: more keybindings to add? need to go through and see what should be
-;; remapped
-
-(global-set-key (kbd "C-c o")     'crux-open-with)
-(global-set-key [remap kill-line] 'crux-smart-kill-line) ; C-k
-(global-set-key (kbd "C-S-RET")   'crux-smart-open-line-above)
-(global-set-key (kbd "S-RET")     'crux-smart-open-line)
-(global-set-key (kbd "C-c n")     'crux-cleanup-buffer-or-region)
-(global-set-key (kbd "C-c f")     'crux-recentf-find-file)
-(global-set-key (kbd "C-c F")     'crux-recentf-find-directory)
-(global-set-key (kbd "C-c e")     'crux-eval-and-replace)
-(global-set-key (kbd "C-c D")     'crux-delete-file-and-buffer)
-(global-set-key (kbd "M-/")       'hippie-expand)
-(global-set-key (kbd "C-x C-b")   'ibuffer)
-(global-set-key (kbd "M-z")       'zap-up-to-char)
-(global-set-key (kbd "C-s")       'isearch-forward-regexp)
-(global-set-key (kbd "C-r")       'isearch-backward-regexp)
-(global-set-key (kbd "C-M-s")     'isearch-forward)
-(global-set-key (kbd "C-M-r")     'isearch-backward)
-(global-set-key (kbd "M-;")       'knube/comment-or-uncomment)
-
-(autoload 'zap-up-to-char "misc"
-  "Kill up to, but not including ARGth occurrence of CHAR." t)
-
-(defun knube/comment-or-uncomment ()
-  (interactive)
-  (let (beg end)
-    (if (region-active-p)
-        (setq beg (region-beginning) end (region-end))
-      (setq beg (line-beginning-position) end (line-end-position)))
-    (comment-or-uncomment-region beg end)))
-
 (straight-use-package 'smartparens)
 (require 'smartparens-config)
 (smartparens-global-mode +1)
@@ -138,13 +96,6 @@
       mouse-yank-at-point             t)
 
 (add-hook 'emacs-startup-hook 'toggle-frame-maximized)
-
-(global-set-key (kbd "M-<f10>")   'toggle-frame-maximized)
-(global-set-key (kbd "M-S-<f10>") 'toggle-frame-fullscreen)
-
-(global-unset-key (kbd "s-p"))     ; no one needs print
-(global-unset-key (kbd "C-x f"))   ; set-fill-column is always 80
-(global-unset-key (kbd "C-x C-n")) ; set-goal-column is just annoying
 
 (add-hook 'prog-mode-hook   'subword-mode)
 (add-hook 'before-save-hook 'delete-trailing-whitespace)
@@ -196,12 +147,52 @@
 (setq backup-directory-alist `((".*" . ,temporary-file-directory)))
 (setq auto-save-file-name-transforms `((".*" ,temporary-file-directory t)))
 
-(set-face-attribute
- 'default        nil :family "Fira Code" :height 180 :weight 'light)
-(set-face-attribute
- 'fixed-pitch    nil :family "Fira Code" :height 180 :weight 'light)
-(set-face-attribute
- 'variable-pitch nil :family "Fira Code" :height 180 :weight 'light)
+(straight-use-package 'undo-fu) ;; move this!
+(straight-use-package 'evil)
+(setq evil-want-integration t ;; This is optional since it's already set to t by default.
+      evil-want-keybinding  nil
+      evil-want-fine-undo   t
+      evil-undo-system      'undo-fu)
+(evil-mode +1)
+
+(straight-use-package 'evil-collection)
+(evil-collection-init)
+
+(straight-use-package 'evil-surround)
+(global-evil-surround-mode +1)
+
+(straight-use-package 'evil-embrace)
+(evil-embrace-enable-evil-surround-integration)
+
+(straight-use-package 'evil-lion)
+(evil-lion-mode +1)
+
+(straight-use-package 'evil-nerd-commenter)
+(evilnc-default-hotkeys)
+
+(straight-use-package 'evil-smartparens)
+(add-hook 'smartparens-enabled-hook #'evil-smartparens-mode)
+
+(straight-use-package 'general)
+(general-auto-unbind-keys)
+
+(setq mac-command-modifier      'meta
+      mac-option-modifier       nil
+      mac-right-option-modifier nil
+      mac-function-modifier     nil)
+
+(straight-use-package 'which-key)
+(setq which-key-idle-delay    0.5
+      which-key-separator     " "
+      which-key-sort-order    'which-key-description-order
+      which-key-prefix-prefix "+")
+(which-key-mode +1)
+
+(straight-use-package 'crux)
+
+(set-face-attribute 'default        nil :family "Iosevka"  :height 180 :weight 'light)
+(set-face-attribute 'fixed-pitch    nil :family "Iosevka"  :height 180 :weight 'light)
+(set-face-attribute 'variable-pitch nil :family "Iosevka"  :height 180 :weight 'light)
 
 (defun knube/fix-org-blocks ()
   (interactive)
@@ -220,16 +211,18 @@
 
 (setq modus-themes-org-blocks     'tinted-background
       modus-themes-scale-headings t)
+
 (modus-themes-load-themes)
-(modus-themes-load-operandi)
+;(modus-themes-load-operandi)
+
+(require 'solar)
+(straight-use-package 'circadian)
+
+(setq circadian-themes '((:sunrise . modus-operandi)
+                         (:sunset  . modus-vivendi)))
+(circadian-setup)
+
 (knube/fix-org-blocks)
-
-(global-set-key (kbd "<f5>") 'knube/toggle-themes)
-
-(defun knube/toggle-themes ()
-  (interactive)
-  (modus-themes-toggle)
-  (knube/fix-org-blocks))
 
 (straight-use-package 'dashboard)
 (dashboard-setup-startup-hook)
@@ -268,38 +261,31 @@
 (telephone-line-mode +1)
 
 (straight-use-package 'writeroom-mode)
-(global-set-key (kbd "<f6>") 'writeroom-mode)
+
+(straight-use-package 'selectrum)
+(straight-use-package 'selectrum-prescient)
+
+(selectrum-mode +1)
+(selectrum-prescient-mode +1)
+(prescient-persist-mode +1)
 
 (straight-use-package 'consult)
-;; todo: one gazillion keybindings
-
-(straight-use-package 'vertico)
-(vertico-mode)
-
-(straight-use-package 'orderless)
-(setq completion-styles             '(orderless)
-      completion-category-defaults  nil
-      completion-category-overrides '((file (styles partial-completion))))
-
-;; Persist history over emacs restart
-(savehist-mode +1)
-
-(defun crm-indicator (args)
-  (cons (concat "[CRM] " (car args)) (cdr args)))
-(advice-add #'completing-read-multiple :filter-args #'crm-indicator)
-
-;; Do not allow the cursor in the minibuffer prompt
-(setq minibuffer-prompt-properties
-      '(read-only t cursor-intangible t face minibuffer-prompt))
-(add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
-
-;; Emacs 28: Hide commands in M-x which do not work in the current mode.
-;; Vertico commands are hidden in normal buffers.
-;; (setq read-extended-command-predicate
-;;       #'command-completion-default-include-p)
-
-;; Enable recursive minibuffers
-(setq enable-recursive-minibuffers t)
+(general-define-key
+ [remap apropos]                       #'consult-apropos
+ [remap bookmark-jump]                 #'consult-bookmark
+ [remap evil-show-marks]               #'consult-mark
+ [remap evil-show-jumps]               #'+vertico/jump-list
+ [remap goto-line]                     #'consult-goto-line
+ [remap imenu]                         #'consult-imenu
+ [remap locate]                        #'consult-locate
+ [remap load-theme]                    #'consult-theme
+ [remap man]                           #'consult-man
+ [remap recentf-open-files]            #'consult-recent-file
+ [remap switch-to-buffer]              #'consult-buffer
+ [remap switch-to-buffer-other-window] #'consult-buffer-other-window
+ [remap switch-to-buffer-other-frame]  #'consult-buffer-other-frame
+ [remap yank-pop]                      #'consult-yank-pop
+ [remap persp-switch-to-buffer]        #'+vertico/switch-workspace-buffer)
 
 (straight-use-package 'marginalia)
 
@@ -309,9 +295,6 @@
 
 (straight-use-package 'embark)
 
-(global-set-key (kbd "C-.")   'embark-act)
-(global-set-key (kbd "C-;")   'embark-dwim)     ; good alternative: M-.
-(global-set-key (kbd "C-h B") 'embark-bindings) ; embark's `describe-bindings'
 
 ;; Optionally replace the key help with a completing-read interface
 (setq prefix-help-command #'embark-prefix-help-command)
@@ -324,6 +307,7 @@
 (add-hook 'embark-collect-mode-hook 'consult-preview-at-point-mode)
 
 (straight-use-package 'company)
+(straight-use-package 'company-prescient)
 
 (setq company-idle-delay                0.5
       company-show-numbers              t
@@ -336,10 +320,6 @@
       company-tooltip-flip-when-above   t)
 
 (global-company-mode +1)
-
-
-(straight-use-package 'company-prescient)
-
 (company-prescient-mode +1)
 
 (straight-use-package 'yasnippet)
@@ -350,15 +330,6 @@
 
 (straight-use-package 'org-contrib)
 (straight-use-package 'org)
-
-(require 'oc)
-(require 'oc-basic)
-(require 'oc-csl)
-(require 'oc-biblatex)
-(require 'oc-natbib)
-;; (require 'ox-bibtex)
-;; (require 'ob-latex)
-;; (require 'ob-emacs-lisp)
 
 (setq org-list-allow-alphabetical      t
       org-fontify-whole-heading-line   t
@@ -394,11 +365,26 @@
                            (add-to-list (make-local-variable 'company-backends)
                                         'company-org-block)))
 
+(straight-use-package 'evil-org)
+(add-hook 'org-mode-hook
+  (lambda ()
+     (evil-org-mode)
+     (evil-org-set-key-theme '(navigation insert textobjects additional calendar))
+     (require 'evil-org-agenda)
+     (evil-org-agenda-set-keys)))
+
 (setq knube/bibs '("~/Dropbox/org/bibs/references.bib"))
+
 (straight-use-package 'citeproc)
 (straight-use-package '(bibtex-actions :type git :host github :repo "bdarcus/bibtex-actions"))
 
+(require 'oc)
+(require 'oc-basic)
+(require 'oc-csl)
+(require 'oc-biblatex)
+(require 'oc-natbib)
 (require 'oc-bibtex-actions)
+
 (setq bibtex-completion-bibliography             knube/bibs
       bibtex-completion-additional-search-fields '(doi url)
       bibtex-actions-at-point-function           'embark-act
@@ -410,10 +396,6 @@
 (add-to-list 'embark-target-finders 'bibtex-actions-citation-key-at-point)
 (add-to-list 'embark-keymap-alist   '(bibtex . bibtex-actions-map))
 (add-to-list 'embark-keymap-alist   '(citation-key . bibtex-actions-buffer-map))
-
-(define-key org-mode-map         (kbd "C-c b") 'org-cite-insert)
-(define-key org-mode-map         (kbd "M-o")   'org-open-at-point)
-(define-key minibuffer-local-map (kbd "M-b")   'bibtex-actions-insert-preset)
 
 ;; Use consult-completing-read for enhanced interface.
 (advice-add #'completing-read-multiple
@@ -454,5 +436,5 @@
 (setq cdlatex-env-alist
       '(("equation*" "\\begin{equation*}\n?\n\\end{equation*}\n" nil)))
 
-;; (straight-use-package 'company-auctex)
-;; (company-auctex-init)
+(straight-use-package 'evil-tex)
+(add-hook 'LaTeX-mode-hook #'evil-tex-mode)
