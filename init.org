@@ -3,8 +3,7 @@ My personal emacs configuration made for macos running on a macbook. It doesn't
 have any version or os checks, so you should probably adapt this for your own
 setup if you want to use it.
 
-* Startup and quality of life
-Section for basic emacs settings and various "quality of life"-stuff.
+* Startup and early configuration
 ** early-init.el
 This subsection tangles =~/.emacs.d/early-init.el= which is loaded before
 =init.el= or any package or UI initialization. It's not a *big deal*, but it
@@ -44,24 +43,6 @@ We also invoke the [[https://www.gnu.org/software/emacs/manual/html_node/elisp/E
       inhibit-scratch-message t
       load-prefer-newer       t)
 
-(when (file-exists-p "~/.emacs.d/straight/repos/auto-compile/")
-  (progn
-    (add-to-list 'load-path "~/.emacs.d/straight/repos/auto-compile/")
-    (add-to-list 'load-path "~/.emacs.d/straight/repos/packed/")
-    (require 'auto-compile)
-    (auto-compile-on-load-mode +1)
-    (auto-compile-on-save-mode +1)))
-
-(when (file-exists-p "~/.emacs.d/straight/repos/no-littering/")
-  (progn
-    (add-to-list  'load-path "~/.emacs.d/straight/repos/no-littering/")
-    (require 'no-littering)
-    (setq auto-save-file-name-transforms
-          `((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
-    (require 'recentf)
-    (add-to-list 'recentf-exclude no-littering-var-directory)
-    (add-to-list 'recentf-exclude no-littering-etc-directory)))
-
 (setq-default evil-want-keybinding nil)
 (setq-default evil-want-integration t)
 #+end_src
@@ -90,19 +71,9 @@ We load user info from =~/.emacs.d/user-info.el= which contains
   (load user-info-file 'noerror))
 #+end_src
 
-** remove built-in org
-We will later install the most recent (stable) version of org.
-#+begin_src emacs-lisp
-(require 'cl-seq)
-(setq load-path
-      (cl-remove-if
-       (lambda (x)
-         (string-match-p "org$" x))
-       load-path))
-#+end_src
 
-** package management
-*** straight.el
+* Package management
+** straight.el
 We use [[https://github.com/raxod502/straight.el/tree/develop][straight.el]] to install packages.
 #+begin_src emacs-lisp
 (defvar bootstrap-version)
@@ -120,29 +91,53 @@ We use [[https://github.com/raxod502/straight.el/tree/develop][straight.el]] to 
   (load bootstrap-file nil 'nomessage))
 #+end_src
 
-*** auto-compile
-[[https://github.com/emacscollective/auto-compile][auto-compile]] is loaded in =early-init.el= to ensure we don't load outdated byte
-code files.
+** [[https://github.com/purcell/exec-path-from-shell][exec-path-from-shell]]
+in =early-init.el=
+#+begin_src emacs-lisp
+(straight-use-package 'exec-path-from-shell)
+(exec-path-from-shell-initialize)
+#+end_src
+
+** [[https://github.com/emacscollective/auto-compile][auto-compile]]
 #+begin_src emacs-lisp
 (straight-use-package' auto-compile)
+(auto-compile-on-load-mode +1)
+(auto-compile-on-save-mode +1)
 #+end_src
 
-*** no-littering
-Keep =~/.emacs.d/= clean with [[https://github.com/emacscollective/no-littering][no-littering]]. Also loaded in =early-init.el=.
+** [[https://github.com/emacscollective/no-littering][no-littering]]
 #+begin_src emacs-lisp
 (straight-use-package 'no-littering)
+(setq auto-save-file-name-transforms
+      `((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
+(setq no-littering-etc-directory
+      (expand-file-name "config/" user-emacs-directory))
+(setq no-littering-var-directory
+      (expand-file-name "data/" user-emacs-directory))
+(require 'no-littering)
+(require 'recentf)
+(add-to-list 'recentf-exclude no-littering-var-directory)
+(add-to-list 'recentf-exclude no-littering-etc-directory)
 #+end_src
 
-** reload config and restart-emacs
-Bound to =SPC q q= and =SPC q r= later.
+** [[https://github.com/iqbalansari/restart-emacs][restart-emacs]]
 #+begin_src emacs-lisp
 (straight-use-package 'restart-emacs)
-(defun knube/reload-config ()
-  (interactive)
-  (load-file user-init-file))
 #+end_src
 
-** garbage collection
+** remove built-in org DISABLED
+We will later install the most recent (stable) version of org.
+#+begin_src emacs-lisp :tangle no
+(require 'cl-seq)
+(setq load-path
+      (cl-remove-if
+       (lambda (x)
+         (string-match-p "org$" x))
+       load-path))
+#+end_src
+
+* Quality of life configuration
+** Garbage collection
 We set =gc= variables to more reasonable values at the end of =emacs-startup=.
 While we're at it we also reset =debug= and =file-name-handler-alist= from
 =early-init.el=
@@ -176,27 +171,6 @@ While we're at it we also reset =debug= and =file-name-handler-alist= from
 
             (add-hook 'minibuffer-setup-hook #'gc-minibuffer-setup-hook)
             (add-hook 'minibuffer-exit-hook #'gc-minibuffer-exit-hook)))
-#+end_src
-
-** env and path variables
-env and path variables are almost always annoying, specially in macos. in macos.
-Steve Purcell's [[https://github.com/purcell/exec-path-from-shell][exec-path-from-shell]] makes all of that a bit easier.
-#+begin_src emacs-lisp
-(straight-use-package 'exec-path-from-shell)
-
-(exec-path-from-shell-initialize)
-(exec-path-from-shell-copy-envs '("LANG"
-                                  "LC_ALL"
-                                  "PYTHONPATH"))
-#+end_src
-
-** smartparens
-Automatic symbol pairing with https://github.com/Fuco1/smartparens. Currently
-global, but we might tweak this later if it becomes annoying.
-#+begin_src emacs-lisp
-(straight-use-package 'smartparens)
-(require 'smartparens-config)
-(smartparens-global-mode +1)
 #+end_src
 
 ** utf-8
@@ -338,6 +312,9 @@ in the appropriate section below.
 
 ** [[https://github.com/expez/evil-smartparens/][evil-smartparens]]
 #+begin_src emacs-lisp
+(straight-use-package 'smartparens)
+(require 'smartparens-config)
+(smartparens-global-mode +1)
 (straight-use-package 'evil-smartparens)
 (add-hook 'smartparens-enabled-hook #'evil-smartparens-mode)
 #+end_src
@@ -406,7 +383,7 @@ org-blocks look weird when switching themes. This fixes it?
 #+end_src
 
 ** [[https://protesilaos.com/modus-themes/][modus-themes]]
-We switch between light and dark theme with =SPC t t=.
+We manually switch between light and dark theme with =SPC t t=.
 #+begin_src emacs-lisp
 (straight-use-package 'modus-themes)
 
@@ -414,14 +391,9 @@ We switch between light and dark theme with =SPC t t=.
       modus-themes-scale-headings t)
 
 (modus-themes-load-themes)
-;(modus-themes-load-operandi)
+(modus-themes-load-operandi)
 
-(require 'solar)
-(straight-use-package 'circadian)
-
-(setq circadian-themes '((:sunrise . modus-operandi)
-                         (:sunset  . modus-vivendi)))
-(circadian-setup)
+(setq knube/dark-theme-enabled-p nil)
 
 (knube/fix-org-blocks)
 #+end_src
@@ -429,6 +401,9 @@ We switch between light and dark theme with =SPC t t=.
 ** [[https://github.com/emacs-dashboard/emacs-dashboard][emacs-dashboard]]
 #+begin_src emacs-lisp
 (straight-use-package 'dashboard)
+(setq initial-buffer-choice (lambda () (get-buffer "*dashboard*")))
+(setq dashboard-center-content t)
+(setq dashboard-banner-logo-title "Welcome to knubemacs")
 (dashboard-setup-startup-hook)
 #+end_src
 
@@ -477,6 +452,18 @@ Conveniently stuffs all minor modes into one little icon.
 For an uncluttered and minimalistic writing experience.
 #+begin_src emacs-lisp
 (straight-use-package 'writeroom-mode)
+#+end_src
+
+** [[https://github.com/Fanael/rainbow-delimiters][rainbow-delimiters-mode]]
+#+begin_src emacs-lisp
+(straight-use-package 'rainbow-delimiters)
+(add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
+#+end_src
+
+** [[https://github.com/domtronn/all-the-icons.el][all-the-icons]]
+Remember to do =M-x all-the-icons-install-fonts= if you don't have the fonts.
+#+begin_src emacs-lisp
+(straight-use-package 'all-the-icons)
 #+end_src
 
 * Completion
@@ -730,7 +717,7 @@ company completion for auctex. Do I need this?
 ;;                                 company-backends))))
 #+end_src
 
-* COMMENT Keybindings
+* Keybindings and hydras
 To keep track of all my keybindings I collect and sort them at the end of my config.
 ** Unbinds
 #+begin_src emacs-lisp
@@ -740,105 +727,152 @@ To keep track of all my keybindings I collect and sort them at the end of my con
   "C-x C-n") ; set-goal-column is just annoying
 #+end_src
 
-** Leader keys
+** [[https://github.com/jerrypnz/major-mode-hydra.el][major-mode-hydra and pretty-mode-hydra]]
+Prettier and slightly easier [[https://github.com/abo-abo/hydra][hydra]] configurations. I'm not sure about [[https://github.com/Ladicle/hydra-posframe][hydra-posframe]], but I'll give it a go for now.
+#+begin_src emacs-lisp
+(straight-use-package 'major-mode-hydra) ;; this includes hydra and pretty-hydra
+#+end_src
+
+** Leader key / main hydra
 #+begin_src emacs-lisp
 (general-create-definer knube/spc-leader
   :states '(normal insert visual emacs)
   :prefix "SPC"
   :non-normal-prefix "M-SPC")
 
-(general-create-definer knube/local-spc-leader
-  :states '(normal insert visual emacs)
-  :prefix "SPC m"
-  :non-normal-prefix "M-SPC m")
+;; (general-create-definer knube/local-spc-leader
+;;   :states '(normal insert visual emacs)
+;;   :prefix "SPC m"
+;;   :non-normal-prefix "M-SPC m")
 
-(knube/local-spc-leader
-  "" '(:which-key "local" :ignore))
+;; (knube/local-spc-leader
+;;   "" '(:which-key "local" :ignore))
+
+(knube/spc-leader
+ "" '(knube/spc-hydra/body :which-key "knubemacs main hydra"))
+
+
 #+end_src
 
 ** SPC
 #+begin_src emacs-lisp
-(knube/spc-leader
-  "SPC" '(execute-extended-command :which-key "M-x")
-  "a" 'embark-act
-  "A" 'embark-dwim
-  "z" 'selectrum-repeat)
-#+end_src
+(pretty-hydra-define knube/spc-hydra
+  (:foreign-keys warn :quit-key "q")
+  ("emacs"
+   (("q"   nil                      "    quit this hydra")
+    ("Q"   save-buffers-kill-emacs  "    exit emacs"    :exit t)
+    ("R"   restart-emacs            "    restart emacs" :exit t)
+    ("<spc>" execute-extended-command "M-x"))
+   ""
+   (("<tab>" other-window                    "other window")
+    ("a"   embark-act                        "     embark act")     ; add spaces for prettier alignment
+    ("z"   selectrum-repeat                  "    repeat command")
+    ("d"   (switch-to-buffer "*dashboard*")  "    dashboard"))
+   "hydras"
+   (("m" nil                        "major mode..." :exit t)
+    ("b" nil                        "buffer..."     :exit t)
+    ("f" nil                        "file..."       :exit t)
+    ("e" nil                        "edit..."       :exit t))
+))
 
-** SPC f (file)
-#+begin_src emacs-lisp
-(knube/spc-leader
-  "f"   '(:which-key "file" :ignore)
-  "f o" 'crux-open-with
-  "f f" 'find-file
-  "f r" 'crux-recentf-find-file
-  "f R" 'crux-recentf-find-directory
-  "f p" 'knube/load-config
-  "f s" 'save-buffer
-  "f w" 'write-file)
 
-(defun knube/load-config ()
+
+    ;; ("Q"   save-buffers-kill-emacs  "save and exit")
+    ;; ("R"   restart-emacs            "restart emacs")
+(defun knube/reload-config ()
+  (interactive)
+  (load-file user-init-file))
+
+(defun knube/open-config ()
   (interactive)
   (find-file (concat user-emacs-directory "init.org")))
 #+end_src
+*** TODO SPC hydra other
+save and exit, restart, x, reload init.el, ... ???
 
-** SPC e (edit)
+** COMMENT SPC f
 #+begin_src emacs-lisp
-(knube/spc-leader
-  "e"   '(:which-key "edit" :ignore)
-  "e n" 'crux-cleanup-buffer-or-region
-  "e e" 'crux-eval-and-replace
-  "e z" 'zap-up-to-char)
+(pretty-hydra-define+ knube/spc-hydra ()
+  ("files"
+   (("f f" find-file              "find file"  )
+    ("f r" crux-recentf-find-file "find recent file")
+    ("f s" save-buffer            "save buffer"          :exit t)
+    ("f w" write-file             "write buffer to file" :exit t)
+    ("f o" knube/spc-f-o-hydra    "other..."             :exit t))))
 
-(autoload 'zap-up-to-char "misc"
-  "Kill up to, but not including ARGth occurrence of CHAR." t)
+    ;; ("f r" crux-rename-file-and-buffer "rename file and buffer")
+  ;; "f R" 'crux-recentf-find-directory
+  ;; "f p" 'knube/open-config
+  ;; "f l" 'knube/reload-config
+  ;; "f o" 'crux-open-with
+
 #+end_src
 
-** SPC s (search)
+** COMMENT SPC e (edit)
 #+begin_src emacs-lisp
-(knube/spc-leader
-  "s"   '(:which-key "search" :ignore)
-  "s s" 'isearch-forward-regexp
-  "s S" 'isearch-forward
-  "s r" 'isearch-backward-regexp
-  "s R" 'isearch-backward)
+(pretty-hydra-define+ knube/spc-hydra ()
+  ("edit"
+   (("e c" evilnc-comment-or-uncomment-lines      "(un)comment lines")
+    ("e p" evilnc-comment-or-uncomment-paragraphs "(un)comment paragraph")
+    ("e l" evilnc-comment-or-uncomment-region     "(un)comment region")
+    ("e z" zap-up-to-char                         "zap up to char" :exit t)
+    ("e o" nil                                    "other..."       :exit t))))
 #+end_src
 
-** SPC b (buffer)
+** COMMENT SPC b (buffer)
 #+begin_src emacs-lisp
-(knube/spc-leader
-  "b"   '(:which-key "buffer" :ignore)
-  "b b" 'consult-buffer
-  "b B" 'ibuffer
-  "b D" 'crux-delete-file-and-buffer
-  "b R" 'crux-rename-file-and-buffer
-  "b k" 'crux-kill-other-buffers
-  "b n" 'crux-cleanup-buffer-or-region)
+(pretty-hydra-define+ knube/spc-hydra ()
+  ("buffer"
+   (("b b" consult-buffer                "buffers" :exit t)
+    ("b k" kill-buffer                   "kill buffer")
+    ("b K" crux-kill-other-buffers       "kill other buffers")
+    ("b n" crux-cleanup-buffer-or-region "cleanup buffer")
+    ("b o" knube/spc-b-o-hydra/body      "other..." :exit t))))
+
+  ;; "b b" 'consult-buffer
+  ;; "b B" 'ibuffer
+  ;; "b D" 'crux-delete-file-and-buffer
+  ;; "b R" 'crux-rename-file-and-buffer
+  ;; "b k" 'crux-kill-other-buffers
+  ;; "b n" 'crux-cleanup-buffer-or-region)
 #+end_src
 
-** SPC q (quit)
+** COMMENT SPC s (search)
 #+begin_src emacs-lisp
-(knube/spc-leader
-  "q"   '(:which-key "quit" :ignore)
-  "q q" 'exit-emacs
-  "q r" 'restart-emacs
-  "q l" 'knube/reload-config)
+(pretty-hydra-define+ knube/spc-hydra ()
+  ("search"
+   (("s f" isearch-forward          "search forward"     :exit t)
+    ("s b" isearch-backward         "search backward"    :exit t)
+    ("s r" query-replace            "search and replace" :exit t)
+    ("s c" consult-ripgrep          "consult ripgrep"    :exit t)
+    ("s o" knube/spc-s-o-hydra/body "other..."           :exit t))))
+
+
+  ;; "s s" 'isearch-forward-regexp
+  ;; "s r" 'isearch-backward-regexp
 #+end_src
 
-** SPC t (toggle)
+** COMMENT SPC w (windows)
+** COMMENT SPC t (toggles)
 #+begin_src emacs-lisp
-(knube/spc-leader
-  "t" '(:which-key "toggle" :ignore)
-  "t t" 'knube/toggle-themes
-  "t T" 'consult-theme
-  "t f" 'toggle-frame-fullscreen
-  "t m" 'toggle-frame-maximized
-  "t w" 'writeroom-mode)
+(pretty-hydra-define+ knube/spc-hydra ()
+  ("toggles"
+   (("t t" knube/toggle-themes       "dark/light theme" :toggle knube/dark-theme-enabled-p)
+    ("t r" rainbow-delimiters-mode   "rainbow delims"   :toggle t)
+    ("t l" display-line-numbers-mode "line numbering"   :toggle t)
+    ("t w" writeroom-mode            "writeroom"        :toggle t)
+    ("t o" nil                       "other..."         :exit t))))
+  ;;    t f" 'toggle-frame-fullscreen
+  ;; "t m" 'toggle-frame-maximized
+  ;; "t w" 'writeroom-mode)
 
 (defun knube/toggle-themes ()
   (interactive)
   (modus-themes-toggle)
+  (setq knube/dark-theme-enabled-p (not knube/dark-theme-enabled-p))
   (knube/fix-org-blocks))
+
+(setq display-line-numbers-type 'relative)
 #+end_src
 
 ** crux bindings
@@ -859,7 +893,7 @@ To keep track of all my keybindings I collect and sort them at the end of my con
 #+end_src
 
 ** org-mode
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (knube/local-spc-leader
   :keymaps 'org-mode-map
   :states '(normal insert)
@@ -870,17 +904,14 @@ To keep track of all my keybindings I collect and sort them at the end of my con
   "{" 'org-cdlatex-environment-indent)
 #+end_src
 *** org-src-mode
-#+begin_src emacs-lisp
+This doesn't seem to work properly?
+#+begin_src emacs-lisp :tangle no
 (knube/local-spc-leader
   :keymaps 'org-src-mode-map
   :states '(normal insert)
   "'" 'org-edit-src-exit
   "{" 'org-cdlatex-environment-indent)
 #+end_src
-
-
-* Keybindings and hydras
-
 
 * Local variables
 # Local Variables:

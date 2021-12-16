@@ -21,23 +21,5 @@
       inhibit-scratch-message t
       load-prefer-newer       t)
 
-(when (file-exists-p "~/.emacs.d/straight/repos/auto-compile/")
-  (progn
-    (add-to-list 'load-path "~/.emacs.d/straight/repos/auto-compile/")
-    (add-to-list 'load-path "~/.emacs.d/straight/repos/packed/")
-    (require 'auto-compile)
-    (auto-compile-on-load-mode +1)
-    (auto-compile-on-save-mode +1)))
-
-(when (file-exists-p "~/.emacs.d/straight/repos/no-littering/")
-  (progn
-    (add-to-list  'load-path "~/.emacs.d/straight/repos/no-littering/")
-    (require 'no-littering)
-    (setq auto-save-file-name-transforms
-          `((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
-    (require 'recentf)
-    (add-to-list 'recentf-exclude no-littering-var-directory)
-    (add-to-list 'recentf-exclude no-littering-etc-directory)))
-
 (setq-default evil-want-keybinding nil)
 (setq-default evil-want-integration t)

@@ -6,13 +6,6 @@
 (when (file-exists-p user-info-file)
   (load user-info-file 'noerror))
 
-(require 'cl-seq)
-(setq load-path
-      (cl-remove-if
-       (lambda (x)
-         (string-match-p "org$" x))
-       load-path))
-
 (defvar bootstrap-version)
 (let ((bootstrap-file
        (expand-file-name "straight/repos/straight.el/bootstrap.el"
@@ -27,14 +20,26 @@
       (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
 
+(straight-use-package 'exec-path-from-shell)
+(exec-path-from-shell-initialize)
+
 (straight-use-package' auto-compile)
+(auto-compile-on-load-mode +1)
+(auto-compile-on-save-mode +1)
 
 (straight-use-package 'no-littering)
+(setq auto-save-file-name-transforms
+      `((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
+(setq no-littering-etc-directory
+      (expand-file-name "config/" user-emacs-directory))
+(setq no-littering-var-directory
+      (expand-file-name "data/" user-emacs-directory))
+(require 'no-littering)
+(require 'recentf)
+(add-to-list 'recentf-exclude no-littering-var-directory)
+(add-to-list 'recentf-exclude no-littering-etc-directory)
 
 (straight-use-package 'restart-emacs)
-(defun knube/reload-config ()
-  (interactive)
-  (load-file user-init-file))
 
 ;; Increase this if stuttering occurs. Decrease if freezes occurs.
 (defvar knube-gc-cons-threshold (* 64 1024 1024))
@@ -65,17 +70,6 @@
 
             (add-hook 'minibuffer-setup-hook #'gc-minibuffer-setup-hook)
             (add-hook 'minibuffer-exit-hook #'gc-minibuffer-exit-hook)))
-
-(straight-use-package 'exec-path-from-shell)
-
-(exec-path-from-shell-initialize)
-(exec-path-from-shell-copy-envs '("LANG"
-                                  "LC_ALL"
-                                  "PYTHONPATH"))
-
-(straight-use-package 'smartparens)
-(require 'smartparens-config)
-(smartparens-global-mode +1)
 
 (setq utf-translate-cjk-mode nil     ; disable CJK coding/encoding
       locale-coding-system   'utf-8)
@@ -170,6 +164,9 @@
 (straight-use-package 'evil-nerd-commenter)
 (evilnc-default-hotkeys)
 
+(straight-use-package 'smartparens)
+(require 'smartparens-config)
+(smartparens-global-mode +1)
 (straight-use-package 'evil-smartparens)
 (add-hook 'smartparens-enabled-hook #'evil-smartparens-mode)
 
@@ -213,18 +210,16 @@
       modus-themes-scale-headings t)
 
 (modus-themes-load-themes)
-;(modus-themes-load-operandi)
+(modus-themes-load-operandi)
 
-(require 'solar)
-(straight-use-package 'circadian)
-
-(setq circadian-themes '((:sunrise . modus-operandi)
-                         (:sunset  . modus-vivendi)))
-(circadian-setup)
+(setq knube/dark-theme-enabled-p nil)
 
 (knube/fix-org-blocks)
 
 (straight-use-package 'dashboard)
+(setq initial-buffer-choice (lambda () (get-buffer "*dashboard*")))
+(setq dashboard-center-content t)
+(setq dashboard-banner-logo-title "Welcome to knubemacs")
 (dashboard-setup-startup-hook)
 
 (straight-use-package 'minions)
@@ -261,6 +256,11 @@
 (telephone-line-mode +1)
 
 (straight-use-package 'writeroom-mode)
+
+(straight-use-package 'rainbow-delimiters)
+(add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
+
+(straight-use-package 'all-the-icons)
 
 (straight-use-package 'selectrum)
 (straight-use-package 'selectrum-prescient)
@@ -438,3 +438,68 @@
 
 (straight-use-package 'evil-tex)
 (add-hook 'LaTeX-mode-hook #'evil-tex-mode)
+
+(general-unbind
+  "s-p"      ; no one needs print
+  "C-x f"    ; set-fill-column is always 80
+  "C-x C-n") ; set-goal-column is just annoying
+
+(straight-use-package 'major-mode-hydra) ;; this includes hydra and pretty-hydra
+
+(general-create-definer knube/spc-leader
+  :states '(normal insert visual emacs)
+  :prefix "SPC"
+  :non-normal-prefix "M-SPC")
+
+;; (general-create-definer knube/local-spc-leader
+;;   :states '(normal insert visual emacs)
+;;   :prefix "SPC m"
+;;   :non-normal-prefix "M-SPC m")
+
+;; (knube/local-spc-leader
+;;   "" '(:which-key "local" :ignore))
+
+(knube/spc-leader
+ "" '(knube/spc-hydra/body :which-key "knubemacs main hydra"))
+
+(pretty-hydra-define knube/spc-hydra
+  (:foreign-keys warn :quit-key "q")
+  ("emacs"
+   (("q"   nil                      "    quit this hydra")
+    ("Q"   save-buffers-kill-emacs  "    exit emacs"    :exit t)
+    ("R"   restart-emacs            "    restart emacs" :exit t)
+    ("<spc>" execute-extended-command "M-x"))
+   ""
+   (("<tab>" other-window                    "other window")
+    ("a"   embark-act                        "     embark act")     ; add spaces for prettier alignment
+    ("z"   selectrum-repeat                  "    repeat command")
+    ("d"   (switch-to-buffer "*dashboard*")  "    dashboard"))
+   "hydras"
+   (("m" nil                        "major mode..." :exit t)
+    ("b" nil                        "buffer..."     :exit t)
+    ("f" nil                        "file..."       :exit t)
+    ("e" nil                        "edit..."       :exit t))
+))
+
+
+
+    ;; ("Q"   save-buffers-kill-emacs  "save and exit")
+    ;; ("R"   restart-emacs            "restart emacs")
+(defun knube/reload-config ()
+  (interactive)
+  (load-file user-init-file))
+
+(defun knube/open-config ()
+  (interactive)
+  (find-file (concat user-emacs-directory "init.org")))
+
+(general-define-key
+ [remap kill-line] 'crux-smart-kill-line ; C-k
+ "C-S-RET"         'crux-smart-open-line-above
+ "S-RET"           'crux-smart-open-line
+ "M-/"             'hippie-expand)
+
+(general-define-key
+ "C-."   'embark-act
+ "C-;"   'embark-dwim     ; good alternative: M-.
+ "C-h B" 'embark-bindings) ; embark's `describe-bindings'
