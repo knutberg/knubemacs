@@ -6,6 +6,13 @@
 (when (file-exists-p user-info-file)
   (load user-info-file 'noerror))
 
+(setq user-init-file (concat user-emacs-directory "init.el"))
+
+(defun knube/reload-init ()
+  (interactive)
+  (org-babel-tangle-file (concat user-emacs-directory "init.org"))
+  (load-file (concat user-emacs-directory "init.el")))
+
 (defvar bootstrap-version)
 (let ((bootstrap-file
        (expand-file-name "straight/repos/straight.el/bootstrap.el"
@@ -91,6 +98,10 @@
 
 (add-hook 'emacs-startup-hook 'toggle-frame-maximized)
 
+(straight-use-package 'smartparens)
+(require 'smartparens-config)
+(smartparens-global-mode +1)
+
 (add-hook 'prog-mode-hook   'subword-mode)
 (add-hook 'before-save-hook 'delete-trailing-whitespace)
 (add-hook 'before-save-hook
@@ -141,42 +152,10 @@
 (setq backup-directory-alist `((".*" . ,temporary-file-directory)))
 (setq auto-save-file-name-transforms `((".*" ,temporary-file-directory t)))
 
-(straight-use-package 'undo-fu) ;; move this!
-(straight-use-package 'evil)
-(setq evil-want-integration t ;; This is optional since it's already set to t by default.
-      evil-want-keybinding  nil
-      evil-want-fine-undo   t
-      evil-undo-system      'undo-fu)
-(evil-mode +1)
-
-(straight-use-package 'evil-collection)
-(evil-collection-init)
-
-(straight-use-package 'evil-surround)
-(global-evil-surround-mode +1)
-
-(straight-use-package 'evil-embrace)
-(evil-embrace-enable-evil-surround-integration)
-
-(straight-use-package 'evil-lion)
-(evil-lion-mode +1)
-
-(straight-use-package 'evil-nerd-commenter)
-(evilnc-default-hotkeys)
-
-(straight-use-package 'smartparens)
-(require 'smartparens-config)
-(smartparens-global-mode +1)
-(straight-use-package 'evil-smartparens)
-(add-hook 'smartparens-enabled-hook #'evil-smartparens-mode)
-
-(straight-use-package 'general)
-(general-auto-unbind-keys)
-
 (setq mac-command-modifier      'meta
       mac-option-modifier       nil
       mac-right-option-modifier nil
-      mac-function-modifier     nil)
+      mac-function-modifier     'super)
 
 (straight-use-package 'which-key)
 (setq which-key-idle-delay    0.5
@@ -187,9 +166,54 @@
 
 (straight-use-package 'crux)
 
-(set-face-attribute 'default        nil :family "Iosevka"  :height 180 :weight 'light)
-(set-face-attribute 'fixed-pitch    nil :family "Iosevka"  :height 180 :weight 'light)
-(set-face-attribute 'variable-pitch nil :family "Iosevka"  :height 180 :weight 'light)
+(global-set-key (kbd "C-c o") 'crux-open-with)
+
+(global-set-key [remap kill-line]       #'crux-smart-kill-line)
+(global-set-key [remap kill-whole-line] #'crux-kill-whole-line)
+(global-set-key (kbd "C-S-k")           #'crux-kill-line-backwards)
+(global-set-key (kbd "s-k")             #'crux-kill-and-join-forward)
+
+(global-set-key [remap move-beginning-of-line] #'crux-move-beginning-of-line)
+
+(global-set-key [(control shift return)] 'crux-smart-open-line-above)
+(global-set-key [(shift return)]         'crux-smart-open-line)
+
+(global-set-key (kbd "C-c n") 'crux-cleanup-buffer-or-region)
+(global-set-key (kbd "C-c f") 'crux-recentf-find-file)
+(global-set-key (kbd "C-c F") 'crux-recentf-find-directory)
+(global-set-key (kbd "C-c u") 'crux-view-url)
+(global-set-key (kbd "C-c e") 'crux-eval-and-replace)
+(global-set-key (kbd "C-c D") 'crux-delete-file-and-buffer)
+(global-set-key (kbd "C-c c") 'crux-copy-file-preserve-attributes)
+(global-set-key (kbd "C-c d") 'crux-duplicate-current-line-or-region)
+(global-set-key (kbd "C-c r") 'crux-rename-file-and-buffer)
+(global-set-key (kbd "C-c t") 'crux-visit-term-buffer)
+(global-set-key (kbd "C-c k") 'crux-kill-other-buffers)
+
+
+(global-set-key (kbd "C-c M-d") 'crux-duplicate-and-comment-current-line-or-region)
+(global-set-key (kbd "C-c z")   'crux-indent-defun)
+(global-set-key (kbd "C-c TAB") 'crux-indent-rigidly-and-copy-to-clipboard)
+
+(global-set-key (kbd "C-x 4 t") 'crux-transpose-windows)
+
+(global-set-key (kbd "C-x C-u") 'crux-upcase-region)
+(global-set-key (kbd "C-x C-l") 'crux-downcase-region)
+(global-set-key (kbd "C-x M-c") 'crux-capitalize-region)
+
+(straight-use-package 'undo-fu)
+(global-unset-key (kbd "C-_"))
+(global-set-key [remap undo]  'undo-fu-only-undo)
+(global-set-key (kbd "C-?")   'undo-fu-only-redo)
+(global-set-key (kbd "C-x U") 'undo-fu-only-redo)
+
+(straight-use-package 'ace-window)
+(global-set-key (kbd "s-w") 'ace-window)
+(global-set-key [remap other-window] 'ace-window)
+
+(set-face-attribute 'default        nil :family "Iosevka Fixed Extended"  :height 170 :weight 'medium)
+(set-face-attribute 'fixed-pitch    nil :family "Iosevka Fixed Extended"  :height 170 :weight 'medium)
+(set-face-attribute 'variable-pitch nil :family "Iosevka Fixed Extended"  :height 170 :weight 'medium)
 
 (defun knube/fix-org-blocks ()
   (interactive)
@@ -216,11 +240,89 @@
 
 (knube/fix-org-blocks)
 
-(straight-use-package 'dashboard)
-(setq initial-buffer-choice (lambda () (get-buffer "*dashboard*")))
-(setq dashboard-center-content t)
-(setq dashboard-banner-logo-title "Welcome to knubemacs")
-(dashboard-setup-startup-hook)
+(defun knube/toggle-themes ()
+  (interactive)
+  (modus-themes-toggle)
+  (setq knube/dark-theme-enabled-p (not knube/dark-theme-enabled-p))
+  (knube/fix-org-blocks))
+
+(straight-use-package '(pulsar :type git :repo "https://gitlab.com/protesilaos/pulsar.git"))
+
+(pulsar-setup)
+
+(customize-set-variable
+ 'pulsar-pulse-functions ; Read the doc string for why not `setq'
+ '(recenter-top-bottom
+   move-to-window-line-top-bottom
+   reposition-window
+   bookmark-jump
+   other-window
+   delete-window
+   delete-other-windows
+   forward-page
+   backward-page
+   scroll-up-command
+   scroll-down-command
+   windmove-right
+   windmove-left
+   windmove-up
+   windmove-down
+   windmove-swap-states-right
+   windmove-swap-states-left
+   windmove-swap-states-up
+   windmove-swap-states-down
+   tab-new
+   tab-close
+   tab-next
+   org-next-visible-heading
+   org-previous-visible-heading
+   org-forward-heading-same-level
+   org-backward-heading-same-level
+   outline-backward-same-level
+   outline-forward-same-level
+   outline-next-visible-heading
+   outline-previous-visible-heading
+   outline-up-heading))
+
+(setq pulsar-pulse t)
+(setq pulsar-delay 0.055)
+(setq pulsar-iterations 10)
+(setq pulsar-face 'pulsar-magenta)
+
+;; pulsar does not define any key bindings.  This is just a sample that
+;; respects the key binding conventions.  Evaluate:
+;;
+;;     (info "(elisp) Key Binding Conventions")
+;;
+;; The author uses C-x l for `pulsar-pulse-line' and C-x L for
+;; `pulsar-highlight-line'.
+(let ((map global-map))
+  (define-key map (kbd "C-c h p") #'pulsar-pulse-line)
+  (define-key map (kbd "C-c h h") #'pulsar-highlight-line))
+
+(straight-use-package 'logos)
+
+;;If you want to use outlines instead of page breaks (the ^L)
+(with-eval-after-load 'org
+  (setq logos-outlines-are-pages t)
+  (setq logos-outline-regexp-alist
+        `((emacs-lisp-mode . "^;;;+ ")
+          (org-mode . "^\\*+ +")
+          (t . ,(or outline-regexp logos--page-delimiter)))))
+
+;; These apply when `logos-focus-mode' is enabled.  Their value is
+;; buffer-local.
+(setq-default logos-hide-mode-line nil
+              logos-scroll-lock nil
+              logos-variable-pitch nil
+              logos-indicate-buffer-boundaries nil
+              logos-buffer-read-only nil
+              logos-olivetti nil)
+
+(let ((map global-map))
+  (define-key map [remap narrow-to-region] #'logos-narrow-dwim)
+  (define-key map [remap forward-page]     #'logos-forward-page-dwim)
+  (define-key map [remap backward-page]    #'logos-backward-page-dwim))
 
 (straight-use-package 'minions)
 
@@ -257,6 +359,9 @@
 
 (straight-use-package 'writeroom-mode)
 
+(add-hook 'writeroom-mode-enable-hook #'(lambda () (text-scale-adjust 2)))
+(add-hook 'writeroom-mode-disable-hook #'(lambda () (text-scale-adjust 0)))
+
 (straight-use-package 'rainbow-delimiters)
 (add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
 
@@ -270,40 +375,130 @@
 (prescient-persist-mode +1)
 
 (straight-use-package 'consult)
-(general-define-key
- [remap apropos]                       #'consult-apropos
- [remap bookmark-jump]                 #'consult-bookmark
- [remap evil-show-marks]               #'consult-mark
- [remap evil-show-jumps]               #'+vertico/jump-list
- [remap goto-line]                     #'consult-goto-line
- [remap imenu]                         #'consult-imenu
- [remap locate]                        #'consult-locate
- [remap load-theme]                    #'consult-theme
- [remap man]                           #'consult-man
- [remap recentf-open-files]            #'consult-recent-file
- [remap switch-to-buffer]              #'consult-buffer
- [remap switch-to-buffer-other-window] #'consult-buffer-other-window
- [remap switch-to-buffer-other-frame]  #'consult-buffer-other-frame
- [remap yank-pop]                      #'consult-yank-pop
- [remap persp-switch-to-buffer]        #'+vertico/switch-workspace-buffer)
+
+;; C-c bindings (mode-specific-map)
+(global-set-key (kbd "C-c h") 'consult-history)
+(global-set-key (kbd "C-c m") 'consult-mode-command)
+(global-set-key (kbd "C-c k") 'consult-kmacro)
+
+;; C-x bindings (ctl-x-map)
+(global-set-key (kbd "C-x M-:") 'consult-complex-command)     ;; orig. repeat-complex-command
+(global-set-key (kbd "C-x b")   'consult-buffer)              ;; orig. switch-to-buffer
+(global-set-key (kbd "C-x 4 b") 'consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
+(global-set-key (kbd "C-x 5 b") 'consult-buffer-other-frame)  ;; orig. switch-to-buffer-other-frame
+(global-set-key (kbd "C-x r b") 'consult-bookmark)            ;; orig. bookmark-jump
+(global-set-key (kbd "C-x p b") 'consult-project-buffer)      ;; orig. project-switch-to-buffer
+
+;; Custom M-# bindings for fast register access
+(global-set-key (kbd "M-#")   'consult-register-load)
+(global-set-key (kbd "M-'")   'consult-register-store) ;; orig. abbrev-prefix-mark (unrelated)
+(global-set-key (kbd "C-M-#") 'consult-register)
+
+;; Other custom bindings
+(global-set-key (kbd "M-y")      'consult-yank-pop) ;; orig. yank-pop
+(global-set-key (kbd "<help> a") 'consult-apropos)  ;; orig. apropos-command
+
+;; M-g bindings (goto-map)
+(global-set-key (kbd "M-g e")   'consult-compile-error)
+(global-set-key (kbd "M-g f")   'consult-flymake)   ;; Alternative: consult-flycheck
+(global-set-key (kbd "M-g g")   'consult-goto-line) ;; orig. goto-line
+(global-set-key (kbd "M-g M-g") 'consult-goto-line) ;; orig. goto-line
+(global-set-key (kbd "M-g o")   'consult-outline)   ;; Alternative: consult-org-heading
+(global-set-key (kbd "M-g m")   'consult-mark)
+(global-set-key (kbd "M-g k")   'consult-global-mark)
+(global-set-key (kbd "M-g i")   'consult-imenu)
+(global-set-key (kbd "M-g I")   'consult-imenu-multi)
+
+;; M-s bindings (search-map)
+(global-set-key (kbd "M-s d") 'consult-find)
+(global-set-key (kbd "M-s D") 'consult-locate)
+(global-set-key (kbd "M-s g") 'consult-grep)
+(global-set-key (kbd "M-s G") 'consult-git-grep)
+(global-set-key (kbd "M-s r") 'consult-ripgrep)
+(global-set-key (kbd "M-s l") 'consult-line)
+(global-set-key (kbd "M-s L") 'consult-line-multi)
+(global-set-key (kbd "M-s m") 'consult-multi-occur)
+(global-set-key (kbd "M-s k") 'consult-keep-lines)
+(global-set-key (kbd "M-s u") 'consult-focus-lines)
+
+;; Isearch integration
+(global-set-key (kbd "M-s e") 'consult-isearch-history)
+(define-key isearch-mode-map (kbd "M-e")   'consult-isearch-history) ;; orig. isearch-edit-string
+(define-key isearch-mode-map (kbd "M-s e") 'consult-isearch-history) ;; orig. isearch-edit-string
+(define-key isearch-mode-map (kbd "M-s l") 'consult-line)            ;; needed by consult-line to detect isearch
+(define-key isearch-mode-map (kbd "M-s L") 'consult-line-multi)      ;; needed by consult-line to detect isearch
+
+;; Minibuffer history
+(define-key minibuffer-local-map (kbd "M-s") 'consult-history) ;; orig. next-matching-history-element
+(define-key minibuffer-local-map (kbd "M-r") 'consult-history) ;; orig. previous-matching-history-element
+
+;; Enable automatic preview at point in the *Completions* buffer. This is
+;; relevant when you use the default completion UI.
+(add-hook 'completion-list-mode-hook 'consult-preview-at-point-mode)
+
+;; Optionally configure the register formatting. This improves the register
+;; preview for `consult-register', `consult-register-load',
+;; `consult-register-store' and the Emacs built-ins.
+(setq register-preview-delay    0.5
+      register-preview-function #'consult-register-format)
+
+;; Optionally tweak the register preview window.
+;; This adds thin lines, sorting and hides the mode line of the window.
+(advice-add #'register-preview :override #'consult-register-window)
+
+;; Optionally replace `completing-read-multiple' with an enhanced version.
+(advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
+
+;; Use Consult to select xref locations with preview
+(setq xref-show-xrefs-function       #'consult-xref
+      xref-show-definitions-function #'consult-xref)
+
+
+
+;; Optionally configure preview. The default value
+;; is 'any, such that any key triggers the preview.
+;; (setq consult-preview-key 'any)
+;; (setq consult-preview-key (kbd "M-."))
+;; (setq consult-preview-key (list (kbd "<S-down>") (kbd "<S-up>")))
+;; For some commands and buffer sources it is useful to configure the
+;; :preview-key on a per-command basis using the `consult-customize' macro.
+(with-eval-after-load 'consult
+  (consult-customize
+   consult-theme
+   :preview-key '(:debounce 0.2 any)
+   consult-ripgrep consult-git-grep consult-grep
+   consult-bookmark consult-recent-file consult-xref
+   consult--source-bookmark consult--source-recent-file
+   consult--source-project-recent-file
+   :preview-key (kbd "M-."))
+
+  ;; Optionally configure the narrowing key.
+  ;; Both < and C-+ work reasonably well.
+  (setq consult-narrow-key "<")) ;; (kbd "C-+")
 
 (straight-use-package 'marginalia)
 
+(global-set-key (kbd "M-A") 'marginalia-cycle)
 (define-key minibuffer-local-map (kbd "M-A") 'marginalia-cycle)
 
 (marginalia-mode +1)
 
 (straight-use-package 'embark)
 
+(global-set-key (kbd "C-.")   'embark-act)      ;; pick some comfortable binding
+(global-set-key (kbd "C-;")   'embark-dwim)     ;; good alternative: M-.
+(global-set-key (kbd "C-h B") 'embark-bindings) ;; alternative for `describe-bindings'
 
 ;; Optionally replace the key help with a completing-read interface
 (setq prefix-help-command #'embark-prefix-help-command)
 
-(add-to-list 'display-buffer-alist '("\\`\\*Embark Collect
- \\(Live\\|Completions\\)\\*" nil (window-parameters (mode-line-format .
- none))))
+(add-to-list 'display-buffer-alist
+             '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+               nil
+               (window-parameters (mode-line-format . none))))
 
 (straight-use-package 'embark-consult)
+
 (add-hook 'embark-collect-mode-hook 'consult-preview-at-point-mode)
 
 (straight-use-package 'company)
@@ -357,6 +552,12 @@
                              '((emacs-lisp . t)
                                (latex      . t)))
 
+(straight-use-package 'org-download)
+(setq-default org-download-image-dir "~/bilder/")
+(add-hook 'dired-mode-hook 'org-download-enable)
+(with-eval-after-load 'org
+    (org-download-enable))
+
 (straight-use-package 'company-org-block)
 
 (setq company-org-block-edit-style 'auto) ;; 'auto, 'prompt, or 'inline
@@ -365,41 +566,15 @@
                            (add-to-list (make-local-variable 'company-backends)
                                         'company-org-block)))
 
-(straight-use-package 'evil-org)
-(add-hook 'org-mode-hook
-  (lambda ()
-     (evil-org-mode)
-     (evil-org-set-key-theme '(navigation insert textobjects additional calendar))
-     (require 'evil-org-agenda)
-     (evil-org-agenda-set-keys)))
+(straight-use-package 'citar)
 
-(setq knube/bibs '("~/Dropbox/org/bibs/references.bib"))
+(setq citar-bibliography '("~/Dropbox/org/bibs/references.bib"))
 
-(straight-use-package 'citeproc)
-(straight-use-package '(bibtex-actions :type git :host github :repo "bdarcus/bibtex-actions"))
+(global-set-key (kbd "C-c b") 'citar-insert-citation)
+(define-key minibuffer-local-map (kbd "M-b") 'citar-insert-preset)
 
-(require 'oc)
-(require 'oc-basic)
-(require 'oc-csl)
-(require 'oc-biblatex)
-(require 'oc-natbib)
-(require 'oc-bibtex-actions)
-
-(setq bibtex-completion-bibliography             knube/bibs
-      bibtex-completion-additional-search-fields '(doi url)
-      bibtex-actions-at-point-function           'embark-act
-      org-cite-global-bibliography               knube/bibs
-      org-cite-insert-processor                  'oc-bibtex-actions
-      org-cite-follow-processor                  'oc-bibtex-actions
-      org-cite-activate-processor                'basic)
-
-(add-to-list 'embark-target-finders 'bibtex-actions-citation-key-at-point)
-(add-to-list 'embark-keymap-alist   '(bibtex . bibtex-actions-map))
-(add-to-list 'embark-keymap-alist   '(citation-key . bibtex-actions-buffer-map))
-
-;; Use consult-completing-read for enhanced interface.
-(advice-add #'completing-read-multiple
-            :override #'consult-completing-read-multiple)
+;; use consult-completing-read for enhanced interface
+(advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
 
 (straight-use-package 'auctex)
 
@@ -435,71 +610,3 @@
 
 (setq cdlatex-env-alist
       '(("equation*" "\\begin{equation*}\n?\n\\end{equation*}\n" nil)))
-
-(straight-use-package 'evil-tex)
-(add-hook 'LaTeX-mode-hook #'evil-tex-mode)
-
-(general-unbind
-  "s-p"      ; no one needs print
-  "C-x f"    ; set-fill-column is always 80
-  "C-x C-n") ; set-goal-column is just annoying
-
-(straight-use-package 'major-mode-hydra) ;; this includes hydra and pretty-hydra
-
-(general-create-definer knube/spc-leader
-  :states '(normal insert visual emacs)
-  :prefix "SPC"
-  :non-normal-prefix "M-SPC")
-
-;; (general-create-definer knube/local-spc-leader
-;;   :states '(normal insert visual emacs)
-;;   :prefix "SPC m"
-;;   :non-normal-prefix "M-SPC m")
-
-;; (knube/local-spc-leader
-;;   "" '(:which-key "local" :ignore))
-
-(knube/spc-leader
- "" '(knube/spc-hydra/body :which-key "knubemacs main hydra"))
-
-(pretty-hydra-define knube/spc-hydra
-  (:foreign-keys warn :quit-key "q")
-  ("emacs"
-   (("q"   nil                      "    quit this hydra")
-    ("Q"   save-buffers-kill-emacs  "    exit emacs"    :exit t)
-    ("R"   restart-emacs            "    restart emacs" :exit t)
-    ("<spc>" execute-extended-command "M-x"))
-   ""
-   (("<tab>" other-window                    "other window")
-    ("a"   embark-act                        "     embark act")     ; add spaces for prettier alignment
-    ("z"   selectrum-repeat                  "    repeat command")
-    ("d"   (switch-to-buffer "*dashboard*")  "    dashboard"))
-   "hydras"
-   (("m" nil                        "major mode..." :exit t)
-    ("b" nil                        "buffer..."     :exit t)
-    ("f" nil                        "file..."       :exit t)
-    ("e" nil                        "edit..."       :exit t))
-))
-
-
-
-    ;; ("Q"   save-buffers-kill-emacs  "save and exit")
-    ;; ("R"   restart-emacs            "restart emacs")
-(defun knube/reload-config ()
-  (interactive)
-  (load-file user-init-file))
-
-(defun knube/open-config ()
-  (interactive)
-  (find-file (concat user-emacs-directory "init.org")))
-
-(general-define-key
- [remap kill-line] 'crux-smart-kill-line ; C-k
- "C-S-RET"         'crux-smart-open-line-above
- "S-RET"           'crux-smart-open-line
- "M-/"             'hippie-expand)
-
-(general-define-key
- "C-."   'embark-act
- "C-;"   'embark-dwim     ; good alternative: M-.
- "C-h B" 'embark-bindings) ; embark's `describe-bindings'

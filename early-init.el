@@ -20,6 +20,3 @@
 (setq inhibit-startup-message t
       inhibit-scratch-message t
       load-prefer-newer       t)
-
-(setq-default evil-want-keybinding nil)
-(setq-default evil-want-integration t)
