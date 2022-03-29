@@ -19,4 +19,5 @@
 
 (setq inhibit-startup-message t
       inhibit-scratch-message t
-      load-prefer-newer       t)
+      load-prefer-newer       t
+      package-native-compile  t)

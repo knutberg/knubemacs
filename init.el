@@ -6,12 +6,32 @@
 (when (file-exists-p user-info-file)
   (load user-info-file 'noerror))
 
-(setq user-init-file (concat user-emacs-directory "init.el"))
+(setq user-init-file     (concat user-emacs-directory "init.el"))
+(setq user-init-org-file (concat user-emacs-directory "init.org"))
 
 (defun knube/reload-init ()
+  "Reload ~/.emacs.d/init.el."
   (interactive)
-  (org-babel-tangle-file (concat user-emacs-directory "init.org"))
-  (load-file (concat user-emacs-directory "init.el")))
+  (org-babel-tangle-file user-init-org-file)
+  (load-file user-init-file))
+
+(defun knube/open-init ()
+  "Open ~/.emacs.d/init.org."
+  (interactive)
+  (find-file user-init-org-file))
+
+(defconst *IS-MAC*    (eq system-type 'darwin))
+(defconst *IS-WIN*    (eq system-type 'windows-nt))
+(defconst *IS-WIN-WSL (and (eq system-type 'windows-nt) (getenv "WSLENV")))
+(defconst *IS-LINUX*  (eq system-type 'gnu/linux))
+
+(when *IS-MAC*
+  (setq mac-command-modifier      'meta
+        mac-option-modifier       nil
+        mac-right-option-modifier nil
+        mac-function-modifier     'super))
+
+;; todo: do this for win and linux
 
 (defvar bootstrap-version)
 (let ((bootstrap-file
@@ -27,14 +47,49 @@
       (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
 
-(straight-use-package 'exec-path-from-shell)
+(setq knube/packages '(ace-window
+                       all-the-icons
+                       auctex
+                       auctex-latexmk
+                       auto-compile
+                       avy
+                       cdlatex
+                       citar
+                       circadian
+                       company
+                       company-prescient
+                       consult
+                       crux
+                       embark
+                       embark-consult
+                       exec-path-from-shell
+                       logos
+                       marginalia
+                       minions
+                       modus-themes
+                       no-littering
+                       org
+                       org-contrib
+                       org-download
+                       pulsar
+                       rainbow-delimiters
+                       restart-emacs
+                       selectrum
+                       selectrum-prescient
+                       smartparens
+                       telephone-line
+                       undo-fu
+                       which-key
+                       writeroom-mode
+                       yasnippet))
+(dolist (p knube/packages)
+  (straight-use-package p))
+
 (exec-path-from-shell-initialize)
 
-(straight-use-package' auto-compile)
 (auto-compile-on-load-mode +1)
 (auto-compile-on-save-mode +1)
 
-(straight-use-package 'no-littering)
 (setq auto-save-file-name-transforms
       `((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
 (setq no-littering-etc-directory
@@ -45,8 +100,6 @@
 (require 'recentf)
 (add-to-list 'recentf-exclude no-littering-var-directory)
 (add-to-list 'recentf-exclude no-littering-etc-directory)
-
-(straight-use-package 'restart-emacs)
 
 ;; Increase this if stuttering occurs. Decrease if freezes occurs.
 (defvar knube-gc-cons-threshold (* 64 1024 1024))
@@ -98,7 +151,6 @@
 
 (add-hook 'emacs-startup-hook 'toggle-frame-maximized)
 
-(straight-use-package 'smartparens)
 (require 'smartparens-config)
 (smartparens-global-mode +1)
 
@@ -122,7 +174,7 @@
 (global-font-lock-mode   t) ; is this really a good idea?
 (global-auto-revert-mode t) ; refresh buffer on file change
 
-(setq-default cursor-type           'bar
+(setq-default cursor-type            'bar
               indent-tabs-mode       nil  ; indent with space
               fill-column            80   ; always break at 80
               abbrev-mode            t
@@ -152,70 +204,86 @@
 (setq backup-directory-alist `((".*" . ,temporary-file-directory)))
 (setq auto-save-file-name-transforms `((".*" ,temporary-file-directory t)))
 
-(setq mac-command-modifier      'meta
-      mac-option-modifier       nil
-      mac-right-option-modifier nil
-      mac-function-modifier     'super)
-
-(straight-use-package 'which-key)
-(setq which-key-idle-delay    0.5
-      which-key-separator     " "
-      which-key-sort-order    'which-key-description-order
-      which-key-prefix-prefix "+")
-(which-key-mode +1)
-
-(straight-use-package 'crux)
-
-(global-set-key (kbd "C-c o") 'crux-open-with)
-
-(global-set-key [remap kill-line]       #'crux-smart-kill-line)
-(global-set-key [remap kill-whole-line] #'crux-kill-whole-line)
-(global-set-key (kbd "C-S-k")           #'crux-kill-line-backwards)
-(global-set-key (kbd "s-k")             #'crux-kill-and-join-forward)
-
-(global-set-key [remap move-beginning-of-line] #'crux-move-beginning-of-line)
-
-(global-set-key [(control shift return)] 'crux-smart-open-line-above)
-(global-set-key [(shift return)]         'crux-smart-open-line)
-
-(global-set-key (kbd "C-c n") 'crux-cleanup-buffer-or-region)
-(global-set-key (kbd "C-c f") 'crux-recentf-find-file)
-(global-set-key (kbd "C-c F") 'crux-recentf-find-directory)
-(global-set-key (kbd "C-c u") 'crux-view-url)
-(global-set-key (kbd "C-c e") 'crux-eval-and-replace)
-(global-set-key (kbd "C-c D") 'crux-delete-file-and-buffer)
-(global-set-key (kbd "C-c c") 'crux-copy-file-preserve-attributes)
-(global-set-key (kbd "C-c d") 'crux-duplicate-current-line-or-region)
-(global-set-key (kbd "C-c r") 'crux-rename-file-and-buffer)
-(global-set-key (kbd "C-c t") 'crux-visit-term-buffer)
-(global-set-key (kbd "C-c k") 'crux-kill-other-buffers)
 
 
-(global-set-key (kbd "C-c M-d") 'crux-duplicate-and-comment-current-line-or-region)
-(global-set-key (kbd "C-c z")   'crux-indent-defun)
-(global-set-key (kbd "C-c TAB") 'crux-indent-rigidly-and-copy-to-clipboard)
+(setq org-list-allow-alphabetical      t
+      org-fontify-whole-heading-line   t
+      org-startup-indented             t     ; indent sections
+      org-indent-indentation-per-level 2
+      org-adapt-indentation            nil
+      org-src-tab-acts-natively        t     ; tab works as in any major mode
+      org-src-preserve-indentation     t
+      org-log-into-drawer              t     ; wtf is this?
+      org-src-fontify-natively         t     ; highlight code
+      org-log-done                     'time ; add dates on completion of TODOs
+      org-support-shift-select         t     ; select holding down shift
+      org-startup-truncated            nil
+      org-directory                    "~/Dropbox/org"
+      org-agenda-files                 '("~/Dropbox/org/agenda/")
+      org-ellipsis                     " ⤵"
+      org-src-window-setup             'current-window
+      org-latex-pdf-process            (list "latexmk -xelatex -f %f"))
 
-(global-set-key (kbd "C-x 4 t") 'crux-transpose-windows)
+(add-hook 'org-mode-hook (lambda ()
+                           (add-to-list 'org-structure-template-alist
+                                        '("se" . "src emacs-lisp"))))
 
-(global-set-key (kbd "C-x C-u") 'crux-upcase-region)
-(global-set-key (kbd "C-x C-l") 'crux-downcase-region)
-(global-set-key (kbd "C-x M-c") 'crux-capitalize-region)
+(org-babel-do-load-languages 'org-babel-load-languages
+                             '((emacs-lisp . t)
+                               (latex      . t)))
 
-(straight-use-package 'undo-fu)
-(global-unset-key (kbd "C-_"))
-(global-set-key [remap undo]  'undo-fu-only-undo)
-(global-set-key (kbd "C-?")   'undo-fu-only-redo)
-(global-set-key (kbd "C-x U") 'undo-fu-only-redo)
+(setq-default org-download-image-dir "~/bilder/")
+(add-hook 'dired-mode-hook 'org-download-enable)
+(with-eval-after-load 'org
+    (org-download-enable))
 
-(straight-use-package 'ace-window)
+(add-hook 'LaTeX-mode-hook 'reftex-mode)
+(add-hook 'LaTeX-mode-hook 'LaTeX-math-mode)
+(add-hook 'LaTeX-mode-hook 'TeX-PDF-mode)
+
+(setq-default TeX-master nil
+              TeX-engine 'xetex)
+
+(setq TeX-source-correlate-method 'synctex
+      TeX-source-correlate        t
+      TeX-PDF-mode                t
+      TeX-auto-save               t
+      TeX-save-query              nil
+      TeX-parse-self              t
+      reftex-plug-into-AUCTeX     t
+      TeX-view-program-list       '(("Skim" "/Applications/Skim.app/Contents/SharedSupport/displayline -g %n %o %b"))
+      TeX-view-program-selection  '((output-pdf "Skim"))
+      TeX-clean-confirm           nil)
+
+;; make sure everything works fine with latexmk
+(setq auctex-latexmk-inherit-TeX-PDF-mode t)
+
+(auctex-latexmk-setup)
+
+(add-hook 'org-mode-hook   'turn-on-org-cdlatex)
+(add-hook 'LaTeX-mode-hook 'turn-on-cdlatex)
+
+(setq cdlatex-env-alist
+      '(("equation*" "\\begin{equation*}\n?\n\\end{equation*}\n" nil)))
+
 (global-set-key (kbd "s-w") 'ace-window)
 (global-set-key [remap other-window] 'ace-window)
 
-(set-face-attribute 'default        nil :family "Iosevka Fixed Extended"  :height 170 :weight 'medium)
-(set-face-attribute 'fixed-pitch    nil :family "Iosevka Fixed Extended"  :height 170 :weight 'medium)
-(set-face-attribute 'variable-pitch nil :family "Iosevka Fixed Extended"  :height 170 :weight 'medium)
+(set-face-attribute 'default nil
+                    :family "Iosevka Fixed Extended"
+                    :height 170
+                    :weight 'medium)
+(set-face-attribute 'fixed-pitch nil
+                    :family "Iosevka Fixed Extended"
+                    :height 170
+                    :weight 'medium)
+(set-face-attribute 'variable-pitch nil
+                    :family "Iosevka Fixed Extended"
+                    :height 170
+                    :weight 'medium)
 
 (defun knube/fix-org-blocks ()
+  "Extend org-block-line"
   (interactive)
   (eval-after-load 'org
     (lambda ()
@@ -228,66 +296,75 @@
                           :underline nil :overline nil
                           :slant 'italic))))
 
-(straight-use-package 'modus-themes)
-
-(setq modus-themes-org-blocks     'tinted-background
-      modus-themes-scale-headings t)
+(setq modus-themes-org-blocks 'gray-background)
 
 (modus-themes-load-themes)
-(modus-themes-load-operandi)
+;(modus-themes-load-operandi)
 
 (setq knube/dark-theme-enabled-p nil)
+
+(setq circadian-themes '((:sunrise . modus-operandi)
+                         (:sunset  . modus-vivendi)))
+(circadian-setup)
 
 (knube/fix-org-blocks)
 
 (defun knube/toggle-themes ()
+  "Toggle light/dark theme."
   (interactive)
   (modus-themes-toggle)
   (setq knube/dark-theme-enabled-p (not knube/dark-theme-enabled-p))
   (knube/fix-org-blocks))
 
-(straight-use-package '(pulsar :type git :repo "https://gitlab.com/protesilaos/pulsar.git"))
+(require 'pulsar)
 
-(pulsar-setup)
-
-(customize-set-variable
- 'pulsar-pulse-functions ; Read the doc string for why not `setq'
- '(recenter-top-bottom
-   move-to-window-line-top-bottom
-   reposition-window
-   bookmark-jump
-   other-window
-   delete-window
-   delete-other-windows
-   forward-page
-   backward-page
-   scroll-up-command
-   scroll-down-command
-   windmove-right
-   windmove-left
-   windmove-up
-   windmove-down
-   windmove-swap-states-right
-   windmove-swap-states-left
-   windmove-swap-states-up
-   windmove-swap-states-down
-   tab-new
-   tab-close
-   tab-next
-   org-next-visible-heading
-   org-previous-visible-heading
-   org-forward-heading-same-level
-   org-backward-heading-same-level
-   outline-backward-same-level
-   outline-forward-same-level
-   outline-next-visible-heading
-   outline-previous-visible-heading
-   outline-up-heading))
+(setq pulsar-pulse-functions
+      '(isearch-repeat-forward
+        isearch-repeat-backward
+        recenter-top-bottom
+        move-to-window-line-top-bottom
+        reposition-window
+        bookmark-jump
+        other-window
+        delete-window
+        delete-other-windows
+        forward-page
+        backward-page
+        scroll-up-command
+        scroll-down-command
+        windmove-right
+        windmove-left
+        windmove-up
+        windmove-down
+        windmove-swap-states-right
+        windmove-swap-states-left
+        windmove-swap-states-up
+        windmove-swap-states-down
+        tab-new
+        tab-close
+        tab-next
+        org-next-visible-heading
+        org-previous-visible-heading
+        org-forward-heading-same-level
+        org-backward-heading-same-level
+        outline-backward-same-level
+        outline-forward-same-level
+        outline-next-visible-heading
+        outline-previous-visible-heading
+        outline-up-heading))
 
 (setq pulsar-pulse t)
 (setq pulsar-delay 0.055)
 (setq pulsar-iterations 10)
 (setq pulsar-face 'pulsar-magenta)
+(setq pulsar-highlight-face 'pulsar-yellow)
+
+(pulsar-global-mode 1)
+
+;; OR use the local mode for select mode hooks
+
+(dolist (hook '(org-mode-hook emacs-lisp-mode-hook))
+  (add-hook hook #'pulsar-mode))
 
 ;; pulsar does not define any key bindings.  This is just a sample that
 ;; respects the key binding conventions.  Evaluate:
@@ -299,8 +376,6 @@
 (let ((map global-map))
   (define-key map (kbd "C-c h p") #'pulsar-pulse-line)
   (define-key map (kbd "C-c h h") #'pulsar-highlight-line))
-
-(straight-use-package 'logos)
 
 ;;If you want to use outlines instead of page breaks (the ^L)
 (with-eval-after-load 'org
@@ -324,14 +399,10 @@
   (define-key map [remap forward-page]     #'logos-forward-page-dwim)
   (define-key map [remap backward-page]    #'logos-backward-page-dwim))
 
-(straight-use-package 'minions)
-
 (setq minions-mode-line-lighter    "☰"
       minions-mode-line-delimiters '("" . ""))
 
 (minions-mode +1)
-
-(straight-use-package 'telephone-line)
 
 (setq telephone-line-lhs
       '((evil   . (telephone-line-evil-tag-segment
@@ -357,24 +428,14 @@
 (display-time-mode +1)
 (telephone-line-mode +1)
 
-(straight-use-package 'writeroom-mode)
-
 (add-hook 'writeroom-mode-enable-hook #'(lambda () (text-scale-adjust 2)))
 (add-hook 'writeroom-mode-disable-hook #'(lambda () (text-scale-adjust 0)))
 
-(straight-use-package 'rainbow-delimiters)
 (add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
-
-(straight-use-package 'all-the-icons)
-
-(straight-use-package 'selectrum)
-(straight-use-package 'selectrum-prescient)
 
 (selectrum-mode +1)
 (selectrum-prescient-mode +1)
 (prescient-persist-mode +1)
-
-(straight-use-package 'consult)
 
 ;; C-c bindings (mode-specific-map)
 (global-set-key (kbd "C-c h") 'consult-history)
@@ -400,7 +461,7 @@
 
 ;; M-g bindings (goto-map)
 (global-set-key (kbd "M-g e")   'consult-compile-error)
-(global-set-key (kbd "M-g f")   'consult-flymake)   ;; Alternative: consult-flycheck
+;;(global-set-key (kbd "M-g f")   'consult-flymake)   ;; Alternative: consult-flycheck
 (global-set-key (kbd "M-g g")   'consult-goto-line) ;; orig. goto-line
 (global-set-key (kbd "M-g M-g") 'consult-goto-line) ;; orig. goto-line
 (global-set-key (kbd "M-g o")   'consult-outline)   ;; Alternative: consult-org-heading
@@ -476,17 +537,13 @@
   ;; Both < and C-+ work reasonably well.
   (setq consult-narrow-key "<")) ;; (kbd "C-+")
 
-(straight-use-package 'marginalia)
-
 (global-set-key (kbd "M-A") 'marginalia-cycle)
 (define-key minibuffer-local-map (kbd "M-A") 'marginalia-cycle)
 
 (marginalia-mode +1)
 
-(straight-use-package 'embark)
-
 (global-set-key (kbd "C-.")   'embark-act)      ;; pick some comfortable binding
-(global-set-key (kbd "C-;")   'embark-dwim)     ;; good alternative: M-.
+(global-set-key (kbd "C-,")   'embark-dwim)     ;; good alternative: M-.
 (global-set-key (kbd "C-h B") 'embark-bindings) ;; alternative for `describe-bindings'
 
 ;; Optionally replace the key help with a completing-read interface
@@ -497,12 +554,7 @@
                nil
                (window-parameters (mode-line-format . none))))
 
-(straight-use-package 'embark-consult)
-
 (add-hook 'embark-collect-mode-hook 'consult-preview-at-point-mode)
-
-(straight-use-package 'company)
-(straight-use-package 'company-prescient)
 
 (setq company-idle-delay                0.5
       company-show-numbers              t
@@ -517,56 +569,9 @@
 (global-company-mode +1)
 (company-prescient-mode +1)
 
-(straight-use-package 'yasnippet)
-
 (setq yas-snippet-dirs '("~/.emacs.d/snippets"))
 
 (yas-global-mode +1)
-
-(straight-use-package 'org-contrib)
-(straight-use-package 'org)
-
-(setq org-list-allow-alphabetical      t
-      org-fontify-whole-heading-line   t
-      org-startup-indented             nil  ; indent sections
-      org-indent-indentation-per-level 0
-      org-adapt-indentation            nil
-      org-src-tab-acts-natively        t     ; tab works as in any major mode
-      org-src-preserve-indentation     t
-      org-log-into-drawer              t     ; wtf is this?
-      org-src-fontify-natively         t     ; highlight code
-      org-log-done                     'time ; add dates on completion of TODOs
-      org-support-shift-select         t     ; select holding down shift
-      org-startup-truncated            nil
-      org-directory                    "~/Dropbox/org"
-      org-agenda-files                 '("~/Dropbox/org/agenda/")
-      org-ellipsis                     " ⤵"
-      org-src-window-setup             'current-window
-      org-latex-pdf-process            (list "latexmk -xelatex -f %f"))
-
-(add-hook 'org-mode-hook (lambda ()
-                           (add-to-list 'org-structure-template-alist
-                                        '("se" . "src emacs-lisp"))))
-
-(org-babel-do-load-languages 'org-babel-load-languages
-                             '((emacs-lisp . t)
-                               (latex      . t)))
-
-(straight-use-package 'org-download)
-(setq-default org-download-image-dir "~/bilder/")
-(add-hook 'dired-mode-hook 'org-download-enable)
-(with-eval-after-load 'org
-    (org-download-enable))
-
-(straight-use-package 'company-org-block)
-
-(setq company-org-block-edit-style 'auto) ;; 'auto, 'prompt, or 'inline
-
-(add-hook 'org-mode-hook (lambda ()
-                           (add-to-list (make-local-variable 'company-backends)
-                                        'company-org-block)))
-
-(straight-use-package 'citar)
 
 (setq citar-bibliography '("~/Dropbox/org/bibs/references.bib"))
 
@@ -576,37 +581,52 @@
 ;; use consult-completing-read for enhanced interface
 (advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
 
-(straight-use-package 'auctex)
+(global-set-key (kbd "C-;")   'avy-goto-char)
+(global-set-key (kbd "C-:")   'avy-goto-char-2)
+(global-set-key (kbd "M-g f") 'avy-goto-line)
 
-(add-hook 'LaTeX-mode-hook 'reftex-mode)
-(add-hook 'LaTeX-mode-hook 'LaTeX-math-mode)
-(add-hook 'LaTeX-mode-hook 'TeX-PDF-mode)
+(setq which-key-idle-delay    0.5
+      which-key-separator     " "
+      which-key-sort-order    'which-key-description-order
+      which-key-prefix-prefix "+")
+(which-key-mode +1)
 
-(setq-default TeX-master nil
-              TeX-engine 'xetex)
+(global-set-key (kbd "C-c o") 'crux-open-with)
 
-(setq TeX-source-correlate-method 'synctex
-      TeX-source-correlate        t
-      TeX-PDF-mode                t
-      TeX-auto-save               t
-      TeX-save-query              nil
-      TeX-parse-self              t
-      reftex-plug-into-AUCTeX     t
-      TeX-view-program-list       '(("Skim" "/Applications/Skim.app/Contents/SharedSupport/displayline -g %n %o %b"))
-      TeX-view-program-selection  '((output-pdf "Skim"))
-      TeX-clean-confirm           nil)
+(global-set-key [remap kill-line]       #'crux-smart-kill-line)
+(global-set-key [remap kill-whole-line] #'crux-kill-whole-line)
+(global-set-key (kbd "C-S-k")           #'crux-kill-line-backwards)
+(global-set-key (kbd "s-k")             #'crux-kill-and-join-forward)
 
-;; make sure everything works fine with latexmk
-(straight-use-package 'auctex-latexmk)
+(global-set-key [remap move-beginning-of-line] #'crux-move-beginning-of-line)
 
-(setq auctex-latexmk-inherit-TeX-PDF-mode t)
+(global-set-key [(control shift return)] 'crux-smart-open-line-above)
+(global-set-key [(shift return)]         'crux-smart-open-line)
 
-(auctex-latexmk-setup)
+(global-set-key (kbd "C-c n") 'crux-cleanup-buffer-or-region)
+(global-set-key (kbd "C-c f") 'crux-recentf-find-file)
+(global-set-key (kbd "C-c F") 'crux-recentf-find-directory)
+(global-set-key (kbd "C-c u") 'crux-view-url)
+(global-set-key (kbd "C-c e") 'crux-eval-and-replace)
+(global-set-key (kbd "C-c D") 'crux-delete-file-and-buffer)
+(global-set-key (kbd "C-c c") 'crux-copy-file-preserve-attributes)
+(global-set-key (kbd "C-c d") 'crux-duplicate-current-line-or-region)
+(global-set-key (kbd "C-c r") 'crux-rename-file-and-buffer)
+(global-set-key (kbd "C-c t") 'crux-visit-term-buffer)
+(global-set-key (kbd "C-c k") 'crux-kill-other-buffers)
 
-(straight-use-package 'cdlatex)
 
-(add-hook 'org-mode-hook   'turn-on-org-cdlatex)
-(add-hook 'LaTeX-mode-hook 'turn-on-cdlatex)
+(global-set-key (kbd "C-c M-d") 'crux-duplicate-and-comment-current-line-or-region)
+(global-set-key (kbd "C-c z")   'crux-indent-defun)
+(global-set-key (kbd "C-c TAB") 'crux-indent-rigidly-and-copy-to-clipboard)
 
-(setq cdlatex-env-alist
-      '(("equation*" "\\begin{equation*}\n?\n\\end{equation*}\n" nil)))
+(global-set-key (kbd "C-x 4 t") 'crux-transpose-windows)
+
+(global-set-key (kbd "C-x C-u") 'crux-upcase-region)
+(global-set-key (kbd "C-x C-l") 'crux-downcase-region)
+(global-set-key (kbd "C-x M-c") 'crux-capitalize-region)
+
+(global-unset-key (kbd "C-_"))
+(global-set-key [remap undo]  'undo-fu-only-undo)
+(global-set-key (kbd "C-?")   'undo-fu-only-redo)
+(global-set-key (kbd "C-x U") 'undo-fu-only-redo)
