@@ -1,10 +1,12 @@
+(setq user-full-name         "Knut Berg"
+      user-mail-address      "knut.berg@nord.no"
+      calendar-latitude      67.289
+      calendar-longitude     14.560
+      calendar-location-name "Bodø, Norway")
+
 ;;; init.el --- -*- lexical-binding: t -*-
 (setq custom-file (concat user-emacs-directory "custom.el"))
 (load custom-file 'noerror)
-
-(setq user-info-file (concat user-emacs-directory "user-info.el"))
-(when (file-exists-p user-info-file)
-  (load user-info-file 'noerror))
 
 (setq user-init-file     (concat user-emacs-directory "init.el"))
 (setq user-init-org-file (concat user-emacs-directory "init.org"))
@@ -20,19 +22,6 @@
   (interactive)
   (find-file user-init-org-file))
 
-(defconst *IS-MAC*    (eq system-type 'darwin))
-(defconst *IS-WIN*    (eq system-type 'windows-nt))
-(defconst *IS-WIN-WSL (and (eq system-type 'windows-nt) (getenv "WSLENV")))
-(defconst *IS-LINUX*  (eq system-type 'gnu/linux))
-
-(when *IS-MAC*
-  (setq mac-command-modifier      'meta
-        mac-option-modifier       nil
-        mac-right-option-modifier nil
-        mac-function-modifier     'super))
-
-;; todo: do this for win and linux
-
 (defvar bootstrap-version)
 (let ((bootstrap-file
        (expand-file-name "straight/repos/straight.el/bootstrap.el"
@@ -47,59 +36,24 @@
       (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
 
-(setq knube/packages '(ace-window
-                       all-the-icons
-                       auctex
-                       auctex-latexmk
-                       auto-compile
-                       avy
-                       cdlatex
-                       citar
-                       circadian
-                       company
-                       company-prescient
-                       consult
-                       crux
-                       embark
-                       embark-consult
-                       exec-path-from-shell
-                       logos
-                       marginalia
-                       minions
-                       modus-themes
-                       no-littering
-                       org
-                       org-contrib
-                       org-download
-                       pulsar
-                       rainbow-delimiters
-                       restart-emacs
-                       selectrum
-                       selectrum-prescient
-                       smartparens
-                       telephone-line
-                       undo-fu
-                       which-key
-                       writeroom-mode
-                       yasnippet))
-(dolist (p knube/packages)
-  (straight-use-package p))
+(defconst *IS-MAC*    (eq system-type 'darwin))
+(defconst *IS-WIN*    (eq system-type 'windows-nt))
+(defconst *IS-WIN-WSL (and (eq system-type 'windows-nt) (getenv "WSLENV")))
+(defconst *IS-LINUX*  (eq system-type 'gnu/linux))
 
-(exec-path-from-shell-initialize)
+(setq utf-translate-cjk-mode nil     ; disable CJK coding/encoding
+      locale-coding-system   'utf-8)
+(set-language-environment    'utf-8)
+(set-default-coding-systems  'utf-8)
+(set-terminal-coding-system  'utf-8)
+(set-selection-coding-system 'utf-8)
+(prefer-coding-system        'utf-8)
 
-(auto-compile-on-load-mode +1)
-(auto-compile-on-save-mode +1)
-
-(setq auto-save-file-name-transforms
-      `((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
-(setq no-littering-etc-directory
-      (expand-file-name "config/" user-emacs-directory))
-(setq no-littering-var-directory
-      (expand-file-name "data/" user-emacs-directory))
-(require 'no-littering)
-(require 'recentf)
-(add-to-list 'recentf-exclude no-littering-var-directory)
-(add-to-list 'recentf-exclude no-littering-etc-directory)
+(when *IS-MAC*
+  (setq mac-command-modifier      'meta
+        mac-option-modifier       nil
+        mac-right-option-modifier nil
+        mac-function-modifier     'super))
 
 ;; Increase this if stuttering occurs. Decrease if freezes occurs.
 (defvar knube-gc-cons-threshold (* 64 1024 1024))
@@ -131,14 +85,6 @@
             (add-hook 'minibuffer-setup-hook #'gc-minibuffer-setup-hook)
             (add-hook 'minibuffer-exit-hook #'gc-minibuffer-exit-hook)))
 
-(setq utf-translate-cjk-mode nil     ; disable CJK coding/encoding
-      locale-coding-system   'utf-8)
-(set-language-environment    'utf-8)
-(set-default-coding-systems  'utf-8)
-(set-terminal-coding-system  'utf-8)
-(set-selection-coding-system 'utf-8)
-(prefer-coding-system        'utf-8)
-
 (setq scroll-step                     1
       scroll-conservatively           101
       scroll-preserve-screen-position 'always
@@ -151,8 +97,24 @@
 
 (add-hook 'emacs-startup-hook 'toggle-frame-maximized)
 
-(require 'smartparens-config)
-(smartparens-global-mode +1)
+(setq auto-save-file-name-transforms
+      `((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
+(setq no-littering-etc-directory
+      (expand-file-name "config/" user-emacs-directory))
+(setq no-littering-var-directory
+      (expand-file-name "data/" user-emacs-directory))
+(require 'no-littering)
+(require 'recentf)
+(add-to-list 'recentf-exclude no-littering-var-directory)
+(add-to-list 'recentf-exclude no-littering-etc-directory)
+
+(when osx-trash
+  (straight-use-package 'osx-trash)
+  (osx-trash-setup)
+  (setq delete-by-moving-to-trash t))
+
+(straight-use-package 'exec-path-from-shell)
+(exec-path-from-shell-initialize)
 
 (add-hook 'prog-mode-hook   'subword-mode)
 (add-hook 'before-save-hook 'delete-trailing-whitespace)
@@ -204,8 +166,105 @@
 (setq backup-directory-alist `((".*" . ,temporary-file-directory)))
 (setq auto-save-file-name-transforms `((".*" ,temporary-file-directory t)))
 
+(set-face-attribute 'default nil
+                    :family "IBM Plex Mono"
+                    :height 160
+                    :weight 'medium)
+(set-face-attribute 'fixed-pitch nil
+                    :family "IBM Plex Mono"
+                    :height 160
+                    :weight 'medium)
+(set-face-attribute 'variable-pitch nil
+                    :family "IBM Plex Mono"
+                    :height 160
+                    :weight 'medium)
 
+(defun knube/fix-org-blocks ()
+  "Extend org-block-line"
+  (interactive)
+  (eval-after-load 'org
+    (lambda ()
+      (set-face-attribute
+       'org-block nil :extend t)
+      (set-face-attribute 'org-block-begin-line nil :extend t
+                          :underline nil :overline nil
+                          :slant 'italic)
+      (set-face-attribute 'org-block-end-line nil :extend t
+                          :underline nil :overline nil
+                          :slant 'italic))))
 
+(straight-use-package 'modus-themes)
+
+(setq modus-themes-org-blocks 'gray-background)
+
+(modus-themes-load-themes)
+(modus-themes-load-operandi) ; light theme
+(modus-themes-load-vivendi)  ; dark theme
+
+(setq knube/dark-theme-enabled-p nil)
+
+(knube/fix-org-blocks)
+
+(defun knube/toggle-themes ()
+  "Toggle light/dark theme."
+  (interactive)
+  (modus-themes-toggle)
+  (setq knube/dark-theme-enabled-p (not knube/dark-theme-enabled-p))
+  (knube/fix-org-blocks))
+
+(straight-use-package 'minions)
+(setq minions-mode-line-lighter    "☰"
+      minions-mode-line-delimiters '("" . ""))
+
+(minions-mode +1)
+
+(straight-use-package 'telephone-line)
+
+(setq telephone-line-lhs
+      '((evil   . (telephone-line-evil-tag-segment
+                   telephone-line-airline-position-segment))
+        (accent . (telephone-line-buffer-name-segment))
+        (nil    . (telephone-line-buffer-modified-segment)))
+
+      telephone-line-rhs
+      '((nil    . (telephone-line-minions-mode-segment))
+        (accent . (telephone-line-vc-segment))
+        (nil    . (telephone-line-misc-info-segment))))
+
+(setq display-time-24hr-format            t
+      display-time-day-and-date           t
+      display-time-default-load-average   nil
+      display-time-load-average           nil
+      display-time-load-average-threshold nil)
+
+(unless (equal "Battery status not available"
+               (battery))
+  (display-battery-mode +1))
+
+(display-time-mode +1)
+(telephone-line-mode +1)
+
+(straight-use-package 'writeroom-mode)
+(add-hook 'writeroom-mode-enable-hook #'(lambda () (text-scale-adjust 2)))
+(add-hook 'writeroom-mode-disable-hook #'(lambda () (text-scale-adjust 0)))
+
+(straight-use-package 'smartparens)
+(require 'smartparens-config)
+(smartparens-global-mode +1)
+
+(straight-use-package 'rainbow-delimiters)
+(add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
+
+(setq citar-bibliography '("~/Dropbox/org/bibs/references.bib"))
+
+(global-set-key (kbd "C-c b") 'citar-insert-citation)
+(define-key minibuffer-local-map (kbd "M-b") 'citar-insert-preset)
+
+;; use consult-completing-read for enhanced interface
+(advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
+
+(straight-use-package 'org)
+(straight-use-package 'org-contrib)
 (setq org-list-allow-alphabetical      t
       org-fontify-whole-heading-line   t
       org-startup-indented             t     ; indent sections
@@ -232,10 +291,14 @@
                              '((emacs-lisp . t)
                                (latex      . t)))
 
+(straight-use-package 'org-download)
 (setq-default org-download-image-dir "~/bilder/")
 (add-hook 'dired-mode-hook 'org-download-enable)
 (with-eval-after-load 'org
     (org-download-enable))
+
+(straight-use-package 'auctex)
+(straight-use-package 'auctex-latexmk)
 
 (add-hook 'LaTeX-mode-hook 'reftex-mode)
 (add-hook 'LaTeX-mode-hook 'LaTeX-math-mode)
@@ -260,178 +323,83 @@
 
 (auctex-latexmk-setup)
 
+(straight-use-package 'cdlatex)
 (add-hook 'org-mode-hook   'turn-on-org-cdlatex)
 (add-hook 'LaTeX-mode-hook 'turn-on-cdlatex)
 
 (setq cdlatex-env-alist
       '(("equation*" "\\begin{equation*}\n?\n\\end{equation*}\n" nil)))
 
-(global-set-key (kbd "s-w") 'ace-window)
-(global-set-key [remap other-window] 'ace-window)
+(straight-use-package 'bug-hunter)
 
-(set-face-attribute 'default nil
-                    :family "Iosevka Fixed Extended"
-                    :height 170
-                    :weight 'medium)
-(set-face-attribute 'fixed-pitch nil
-                    :family "Iosevka Fixed Extended"
-                    :height 170
-                    :weight 'medium)
-(set-face-attribute 'variable-pitch nil
-                    :family "Iosevka Fixed Extended"
-                    :height 170
-                    :weight 'medium)
+(global-set-key (kbd "C-;")   'avy-goto-char)
+(global-set-key (kbd "C-:")   'avy-goto-char-2)
+(global-set-key (kbd "M-g f") 'avy-goto-line)
 
-(defun knube/fix-org-blocks ()
-  "Extend org-block-line"
-  (interactive)
-  (eval-after-load 'org
-    (lambda ()
-      (set-face-attribute
-       'org-block nil :extend t)
-      (set-face-attribute 'org-block-begin-line nil :extend t
-                          :underline nil :overline nil
-                          :slant 'italic)
-      (set-face-attribute 'org-block-end-line nil :extend t
-                          :underline nil :overline nil
-                          :slant 'italic))))
+(straight-use-package 'smartparens)
+(require 'smartparens-config)
+(smartparens-global-mode +1)
 
-(setq modus-themes-org-blocks 'gray-background)
+(global-set-key (kbd "C-c o") 'crux-open-with)
 
-(modus-themes-load-themes)
-;(modus-themes-load-operandi)
+(global-set-key [remap kill-line]       #'crux-smart-kill-line)
+(global-set-key [remap kill-whole-line] #'crux-kill-whole-line)
+(global-set-key (kbd "C-S-k")           #'crux-kill-line-backwards)
+(global-set-key (kbd "s-k")             #'crux-kill-and-join-forward)
 
-(setq knube/dark-theme-enabled-p nil)
+(global-set-key [remap move-beginning-of-line] #'crux-move-beginning-of-line)
 
-(setq circadian-themes '((:sunrise . modus-operandi)
-                         (:sunset  . modus-vivendi)))
-(circadian-setup)
+(global-set-key [(control shift return)] 'crux-smart-open-line-above)
+(global-set-key [(shift return)]         'crux-smart-open-line)
 
-(knube/fix-org-blocks)
+(global-set-key (kbd "C-c n") 'crux-cleanup-buffer-or-region)
+(global-set-key (kbd "C-c f") 'crux-recentf-find-file)
+(global-set-key (kbd "C-c F") 'crux-recentf-find-directory)
+(global-set-key (kbd "C-c u") 'crux-view-url)
+(global-set-key (kbd "C-c e") 'crux-eval-and-replace)
+(global-set-key (kbd "C-c D") 'crux-delete-file-and-buffer)
+(global-set-key (kbd "C-c c") 'crux-copy-file-preserve-attributes)
+(global-set-key (kbd "C-c d") 'crux-duplicate-current-line-or-region)
+(global-set-key (kbd "C-c r") 'crux-rename-file-and-buffer)
+(global-set-key (kbd "C-c t") 'crux-visit-term-buffer)
+(global-set-key (kbd "C-c k") 'crux-kill-other-buffers)
 
-(defun knube/toggle-themes ()
-  "Toggle light/dark theme."
-  (interactive)
-  (modus-themes-toggle)
-  (setq knube/dark-theme-enabled-p (not knube/dark-theme-enabled-p))
-  (knube/fix-org-blocks))
 
-(require 'pulsar)
+(global-set-key (kbd "C-c M-d") 'crux-duplicate-and-comment-current-line-or-region)
+(global-set-key (kbd "C-c z")   'crux-indent-defun)
+(global-set-key (kbd "C-c TAB") 'crux-indent-rigidly-and-copy-to-clipboard)
 
-(setq pulsar-pulse-functions
-      '(isearch-repeat-forward
-        isearch-repeat-backward
-        recenter-top-bottom
-        move-to-window-line-top-bottom
-        reposition-window
-        bookmark-jump
-        other-window
-        delete-window
-        delete-other-windows
-        forward-page
-        backward-page
-        scroll-up-command
-        scroll-down-command
-        windmove-right
-        windmove-left
-        windmove-up
-        windmove-down
-        windmove-swap-states-right
-        windmove-swap-states-left
-        windmove-swap-states-up
-        windmove-swap-states-down
-        tab-new
-        tab-close
-        tab-next
-        org-next-visible-heading
-        org-previous-visible-heading
-        org-forward-heading-same-level
-        org-backward-heading-same-level
-        outline-backward-same-level
-        outline-forward-same-level
-        outline-next-visible-heading
-        outline-previous-visible-heading
-        outline-up-heading))
+(global-set-key (kbd "C-x 4 t") 'crux-transpose-windows)
 
-(setq pulsar-pulse t)
-(setq pulsar-delay 0.055)
-(setq pulsar-iterations 10)
-(setq pulsar-face 'pulsar-magenta)
-(setq pulsar-highlight-face 'pulsar-yellow)
+(global-set-key (kbd "C-x C-u") 'crux-upcase-region)
+(global-set-key (kbd "C-x C-l") 'crux-downcase-region)
+(global-set-key (kbd "C-x M-c") 'crux-capitalize-region)
 
-(pulsar-global-mode 1)
+(setq knube/packages '(auctex
+                       auctex-latexmk
 
-;; OR use the local mode for select mode hooks
+                       avy
 
-(dolist (hook '(org-mode-hook emacs-lisp-mode-hook))
-  (add-hook hook #'pulsar-mode))
 
-;; pulsar does not define any key bindings.  This is just a sample that
-;; respects the key binding conventions.  Evaluate:
-;;
-;;     (info "(elisp) Key Binding Conventions")
-;;
-;; The author uses C-x l for `pulsar-pulse-line' and C-x L for
-;; `pulsar-highlight-line'.
-(let ((map global-map))
-  (define-key map (kbd "C-c h p") #'pulsar-pulse-line)
-  (define-key map (kbd "C-c h h") #'pulsar-highlight-line))
+                       citar
+                       company
+                       company-prescient
+                       consult
+                       crux
+                       embark
+                       embark-consult
 
-;;If you want to use outlines instead of page breaks (the ^L)
-(with-eval-after-load 'org
-  (setq logos-outlines-are-pages t)
-  (setq logos-outline-regexp-alist
-        `((emacs-lisp-mode . "^;;;+ ")
-          (org-mode . "^\\*+ +")
-          (t . ,(or outline-regexp logos--page-delimiter)))))
+                       marginalia
 
-;; These apply when `logos-focus-mode' is enabled.  Their value is
-;; buffer-local.
-(setq-default logos-hide-mode-line nil
-              logos-scroll-lock nil
-              logos-variable-pitch nil
-              logos-indicate-buffer-boundaries nil
-              logos-buffer-read-only nil
-              logos-olivetti nil)
 
-(let ((map global-map))
-  (define-key map [remap narrow-to-region] #'logos-narrow-dwim)
-  (define-key map [remap forward-page]     #'logos-forward-page-dwim)
-  (define-key map [remap backward-page]    #'logos-backward-page-dwim))
 
-(setq minions-mode-line-lighter    "☰"
-      minions-mode-line-delimiters '("" . ""))
 
-(minions-mode +1)
-
-(setq telephone-line-lhs
-      '((evil   . (telephone-line-evil-tag-segment
-                   telephone-line-airline-position-segment))
-        (accent . (telephone-line-buffer-name-segment))
-        (nil    . (telephone-line-buffer-modified-segment)))
-
-      telephone-line-rhs
-      '((nil    . (telephone-line-minions-mode-segment))
-        (accent . (telephone-line-vc-segment))
-        (nil    . (telephone-line-misc-info-segment))))
-
-(setq display-time-24hr-format            t
-      display-time-day-and-date           t
-      display-time-default-load-average   nil
-      display-time-load-average           nil
-      display-time-load-average-threshold nil)
-
-(unless (equal "Battery status not available"
-               (battery))
-  (display-battery-mode +1))
-
-(display-time-mode +1)
-(telephone-line-mode +1)
-
-(add-hook 'writeroom-mode-enable-hook #'(lambda () (text-scale-adjust 2)))
-(add-hook 'writeroom-mode-disable-hook #'(lambda () (text-scale-adjust 0)))
-
-(add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
+                       undo-fu
+                       which-key
+                       writeroom-mode
+                       yasnippet))
+(dolist (p knube/packages)
+  (straight-use-package p))
 
 (selectrum-mode +1)
 (selectrum-prescient-mode +1)
@@ -572,59 +540,6 @@
 (setq yas-snippet-dirs '("~/.emacs.d/snippets"))
 
 (yas-global-mode +1)
-
-(setq citar-bibliography '("~/Dropbox/org/bibs/references.bib"))
-
-(global-set-key (kbd "C-c b") 'citar-insert-citation)
-(define-key minibuffer-local-map (kbd "M-b") 'citar-insert-preset)
-
-;; use consult-completing-read for enhanced interface
-(advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
-
-(global-set-key (kbd "C-;")   'avy-goto-char)
-(global-set-key (kbd "C-:")   'avy-goto-char-2)
-(global-set-key (kbd "M-g f") 'avy-goto-line)
-
-(setq which-key-idle-delay    0.5
-      which-key-separator     " "
-      which-key-sort-order    'which-key-description-order
-      which-key-prefix-prefix "+")
-(which-key-mode +1)
-
-(global-set-key (kbd "C-c o") 'crux-open-with)
-
-(global-set-key [remap kill-line]       #'crux-smart-kill-line)
-(global-set-key [remap kill-whole-line] #'crux-kill-whole-line)
-(global-set-key (kbd "C-S-k")           #'crux-kill-line-backwards)
-(global-set-key (kbd "s-k")             #'crux-kill-and-join-forward)
-
-(global-set-key [remap move-beginning-of-line] #'crux-move-beginning-of-line)
-
-(global-set-key [(control shift return)] 'crux-smart-open-line-above)
-(global-set-key [(shift return)]         'crux-smart-open-line)
-
-(global-set-key (kbd "C-c n") 'crux-cleanup-buffer-or-region)
-(global-set-key (kbd "C-c f") 'crux-recentf-find-file)
-(global-set-key (kbd "C-c F") 'crux-recentf-find-directory)
-(global-set-key (kbd "C-c u") 'crux-view-url)
-(global-set-key (kbd "C-c e") 'crux-eval-and-replace)
-(global-set-key (kbd "C-c D") 'crux-delete-file-and-buffer)
-(global-set-key (kbd "C-c c") 'crux-copy-file-preserve-attributes)
-(global-set-key (kbd "C-c d") 'crux-duplicate-current-line-or-region)
-(global-set-key (kbd "C-c r") 'crux-rename-file-and-buffer)
-(global-set-key (kbd "C-c t") 'crux-visit-term-buffer)
-(global-set-key (kbd "C-c k") 'crux-kill-other-buffers)
-
-
-(global-set-key (kbd "C-c M-d") 'crux-duplicate-and-comment-current-line-or-region)
-(global-set-key (kbd "C-c z")   'crux-indent-defun)
-(global-set-key (kbd "C-c TAB") 'crux-indent-rigidly-and-copy-to-clipboard)
-
-(global-set-key (kbd "C-x 4 t") 'crux-transpose-windows)
-
-(global-set-key (kbd "C-x C-u") 'crux-upcase-region)
-(global-set-key (kbd "C-x C-l") 'crux-downcase-region)
-(global-set-key (kbd "C-x M-c") 'crux-capitalize-region)
 
 (global-unset-key (kbd "C-_"))
 (global-set-key [remap undo]  'undo-fu-only-undo)

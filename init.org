@@ -1,10 +1,18 @@
 #+PROPERTY: header-args :tangle yes :results silent
+* User info and early init
+** Eser info
+In the words of Kosh Naranek: "Who are you?"
+#+begin_src emacs-lisp
+(setq user-full-name         "Knut Berg"
+      user-mail-address      "knut.berg@nord.no"
+      calendar-latitude      67.289
+      calendar-longitude     14.560
+      calendar-location-name "Bodø, Norway")
+#+end_src
 
-* Startup and early configuration
 ** early-init.el
-This subsection tangles =~/.emacs.d/early-init.el= which is loaded before
-=init.el= or any package or UI initialization. It's not a *big deal*, but it
-improves startup a bit.
+ =~/.emacs.d/early-init.el= is loaded before =init.el= or any package or UI
+initialization. It's not a *big deal*, but it improves startup a bit.
 
 =file-name-handler-alist= is set to nil and reset after init. The
 variable file-name-handler-alist holds a list of handlers, together
@@ -34,7 +42,7 @@ We also invoke the [[https://www.gnu.org/software/emacs/manual/html_node/elisp/E
 (unless (and (display-graphic-p) (eq system-type 'darwin))
   (push '(menu-bar-lines . 0) default-frame-alist))
 (push '(tool-bar-lines . 0) default-frame-alist)
-(push '(vertical-scroll-bars) default-frame-alist)
+(push '(vertical-scroll-bars ) default-frame-alist)
 
 (setq inhibit-startup-message t
       inhibit-scratch-message t
@@ -50,23 +58,7 @@ Save custom settings to =~/.emacs.d/custom.el=.
 (load custom-file 'noerror)
 #+end_src
 
-** user info
-We load user info from =~/.emacs.d/user-info.el= which contains
-#+begin_src emacs-lisp :tangle no
-(setq user-full-name         "name"
-      user-mail-address      "mail"
-      calendar-latitude      0
-      calendar-longitude     0
-      calendar-location-name "location")
-#+end_src
-
-#+begin_src emacs-lisp
-(setq user-info-file (concat user-emacs-directory "user-info.el"))
-(when (file-exists-p user-info-file)
-  (load user-info-file 'noerror))
-#+end_src
-
-** stuff
+** Init files
 #+begin_src emacs-lisp
 (setq user-init-file     (concat user-emacs-directory "init.el"))
 (setq user-init-org-file (concat user-emacs-directory "init.org"))
@@ -81,23 +73,9 @@ We load user info from =~/.emacs.d/user-info.el= which contains
   "Open ~/.emacs.d/init.org."
   (interactive)
   (find-file user-init-org-file))
-
-(defconst *IS-MAC*    (eq system-type 'darwin))
-(defconst *IS-WIN*    (eq system-type 'windows-nt))
-(defconst *IS-WIN-WSL (and (eq systemtype 'windows-nt) (getenv "WSLENV")))
-(defconst *IS-LINUX*  (eq system-type 'gnu/linux))
-
-(when *IS-MAC*
-  (setq mac-command-modifier      'meta
-        mac-option-modifier       nil
-        mac-right-option-modifier nil
-        mac-function-modifier     'super))
-
-;; todo: do this for win and linux
 #+end_src
 
-* Packages
-** [[https://github.com/raxod502/straight.el/tree/develop][straight.el]]
+* [[https://github.com/radian-software/straight.el][straight.el]]
 It's a decent way to install packages.
 #+begin_src emacs-lisp
 (defvar bootstrap-version)
@@ -115,74 +93,39 @@ It's a decent way to install packages.
   (load bootstrap-file nil 'nomessage))
 #+end_src
 
-** package install
+* Emacs and quality of life stuff
+** System environment
 #+begin_src emacs-lisp
-(setq knube/packages '(ace-window
-                       all-the-icons
-                       auctex
-                       auctex-latexmk
-                       auto-compile
-                       avy
-                       cdlatex
-                       citar
-                       circadian
-                       company
-                       company-prescient
-                       consult
-                       crux
-                       embark
-                       embark-consult
-                       exec-path-from-shell
-                       logos
-                       marginalia
-                       minions
-                       modus-themes
-                       no-littering
-                       org
-                       org-contrib
-                       org-download
-                       pulsar
-                       rainbow-delimiters
-                       restart-emacs
-                       selectrum
-                       selectrum-prescient
-                       smartparens
-                       telephone-line
-                       undo-fu
-                       which-key
-                       writeroom-mode
-                       yasnippet))
-(dolist (p knube/packages)
-  (straight-use-package p))
+(defconst *IS-MAC*    (eq system-type 'darwin))
+(defconst *IS-WIN*    (eq system-type 'windows-nt))
+(defconst *IS-WIN-WSL (and (eq system-type 'windows-nt) (getenv "WSLENV")))
+(defconst *IS-LINUX*  (eq system-type 'gnu/linux))
 #+end_src
 
-* Initial quality of life
-** [[https://github.com/purcell/exec-path-from-shell][exec-path-from-shell]]
+** utf-8
+One locale to rule them all.
 #+begin_src emacs-lisp
-(exec-path-from-shell-initialize)
+(setq utf-translate-cjk-mode nil     ; disable CJK coding/encoding
+      locale-coding-system   'utf-8)
+(set-language-environment    'utf-8)
+(set-default-coding-systems  'utf-8)
+(set-terminal-coding-system  'utf-8)
+(set-selection-coding-system 'utf-8)
+(prefer-coding-system        'utf-8)
 #+end_src
 
-** [[https://github.com/emacscollective/auto-compile][auto-compile]]
+** Emacs command keys
+We set command to meta and fn to super. Option is unbound due to various specific inpüts.
 #+begin_src emacs-lisp
-(auto-compile-on-load-mode +1)
-(auto-compile-on-save-mode +1)
+(when *IS-MAC*
+  (setq mac-command-modifier      'meta
+        mac-option-modifier       nil
+        mac-right-option-modifier nil
+        mac-function-modifier     'super))
 #+end_src
+*** TODO: Do this for win and linux
 
-** [[https://github.com/emacscollective/no-littering][no-littering]]
-#+begin_src emacs-lisp
-(setq auto-save-file-name-transforms
-      `((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
-(setq no-littering-etc-directory
-      (expand-file-name "config/" user-emacs-directory))
-(setq no-littering-var-directory
-      (expand-file-name "data/" user-emacs-directory))
-(require 'no-littering)
-(require 'recentf)
-(add-to-list 'recentf-exclude no-littering-var-directory)
-(add-to-list 'recentf-exclude no-littering-etc-directory)
-#+end_src
-
-** garbage collection
+** Garbage collection
 We set =gc= variables to more reasonable values at the end of =emacs-startup=.
 While we're at it we also reset =debug= and =file-name-handler-alist= from
 =early-init.el=
@@ -218,20 +161,8 @@ While we're at it we also reset =debug= and =file-name-handler-alist= from
             (add-hook 'minibuffer-exit-hook #'gc-minibuffer-exit-hook)))
 #+end_src
 
-** utf-8
-One locale to rule them all.
-#+begin_src emacs-lisp
-(setq utf-translate-cjk-mode nil     ; disable CJK coding/encoding
-      locale-coding-system   'utf-8)
-(set-language-environment    'utf-8)
-(set-default-coding-systems  'utf-8)
-(set-terminal-coding-system  'utf-8)
-(set-selection-coding-system 'utf-8)
-(prefer-coding-system        'utf-8)
-#+end_src
-
-** mouse scrolling
-This makes scrolling a bit better with the macbook touchpad.
+** Mouse scrolling
+This makes scrolling a bit better with the Macbook touchpad.
 #+begin_src emacs-lisp
 (setq scroll-step                     1
       scroll-conservatively           101
@@ -244,20 +175,52 @@ This makes scrolling a bit better with the macbook touchpad.
       mouse-yank-at-point             t)
 #+end_src
 
-** start maximized
+** Start maximized
 Start emacs with a maximized frame.
 #+begin_src emacs-lisp
 (add-hook 'emacs-startup-hook 'toggle-frame-maximized)
 #+end_src
 
-** smartparens
+** [[https://github.com/emacscollective/auto-compile][auto-compile]]
 #+begin_src emacs-lisp
-(require 'smartparens-config)
-(smartparens-global-mode +1)
+(straight-use-package 'auto-compile)
+(auto-compile-on-load-mode +1)
+(auto-compile-on-save-mode +1)
+#+end_src)
+
+** [[https://github.com/emacscollective/no-littering][no-littering]]
+Make =~/.emacs.d/= nicely organized and clean.
+#+begin_src emacs-lisp
+(setq auto-save-file-name-transforms
+      `((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
+(setq no-littering-etc-directory
+      (expand-file-name "config/" user-emacs-directory))
+(setq no-littering-var-directory
+      (expand-file-name "data/" user-emacs-directory))
+(require 'no-littering)
+(require 'recentf)
+(add-to-list 'recentf-exclude no-littering-var-directory)
+(add-to-list 'recentf-exclude no-littering-etc-directory)
 #+end_src
 
-** various unsorted stuff
-Most of this is copied from other emacs configs.
+** [[https://github.com/emacsorphanage/osx-trash][osx-trash]]
+Make =delete-by-moving-to-trash= do what you expect it to do.
+#+begin_src emacs-lisp
+(when osx-trash
+  (straight-use-package 'osx-trash)
+  (osx-trash-setup)
+  (setq delete-by-moving-to-trash t))
+#+end_src
+
+** [[https://github.com/purcell/exec-path-from-shell][exec-path-from-shell]]
+Paths and env variables is a pain in the mivonks. This simplifies things.
+#+begin_src emacs-lisp
+(straight-use-package 'exec-path-from-shell)
+(exec-path-from-shell-initialize)
+#+end_src
+
+** Unsorted
+This needs to be cleaned up and properly commented.
 #+begin_src emacs-lisp
 (add-hook 'prog-mode-hook   'subword-mode)
 (add-hook 'before-save-hook 'delete-trailing-whitespace)
@@ -310,11 +273,153 @@ Most of this is copied from other emacs configs.
 (setq auto-save-file-name-transforms `((".*" ,temporary-file-directory t)))
 #+end_src
 
-** macos keys
-We set command to meta and fn to super, option is unbound due to various special
-character inpüts.
-#+begin_src emacs-lisp
 
+
+
+* All things evil
+
+* All things visual
+** Fonts
+#+begin_src emacs-lisp
+(set-face-attribute 'default nil
+                    :family "IBM Plex Mono"
+                    :height 160
+                    :weight 'medium)
+(set-face-attribute 'fixed-pitch nil
+                    :family "IBM Plex Mono"
+                    :height 160
+                    :weight 'medium)
+(set-face-attribute 'variable-pitch nil
+                    :family "IBM Plex Mono"
+                    :height 160
+                    :weight 'medium)
+
+#+end_src
+
+*** org-blocks-fix (STILL NEEDED?)
+emacs 27 introduced the new =:extend= face attribute. In turn, this makes my
+org-blocks look weird when switching themes. This fixes it?
+#+begin_src emacs-lisp
+(defun knube/fix-org-blocks ()
+  "Extend org-block-line"
+  (interactive)
+  (eval-after-load 'org
+    (lambda ()
+      (set-face-attribute
+       'org-block nil :extend t)
+      (set-face-attribute 'org-block-begin-line nil :extend t
+                          :underline nil :overline nil
+                          :slant 'italic)
+      (set-face-attribute 'org-block-end-line nil :extend t
+                          :underline nil :overline nil
+                          :slant 'italic))))
+#+end_src
+
+** Themes
+*** [[https://protesilaos.com/modus-themes/][modus-themes]]
+We manually switch between light and dark theme with =M-x knube/toggle-themes=.
+#+begin_src emacs-lisp
+(straight-use-package 'modus-themes)
+
+(setq modus-themes-org-blocks 'gray-background)
+
+(modus-themes-load-themes)
+(modus-themes-load-operandi) ; light theme
+(modus-themes-load-vivendi)  ; dark theme
+
+(setq knube/dark-theme-enabled-p nil)
+
+(knube/fix-org-blocks)
+
+(defun knube/toggle-themes ()
+  "Toggle light/dark theme."
+  (interactive)
+  (modus-themes-toggle)
+  (setq knube/dark-theme-enabled-p (not knube/dark-theme-enabled-p))
+  (knube/fix-org-blocks))
+#+end_src
+
+** Modeline
+*** [[https://github.com/tarsius/minions][minions]]
+Conveniently stuffs all minor modes into one little icon.
+#+begin_src emacs-lisp
+(straight-use-package 'minions)
+(setq minions-mode-line-lighter    "☰"
+      minions-mode-line-delimiters '("" . ""))
+
+(minions-mode +1)
+#+end_src
+
+*** [[https://github.com/dbordak/telephone-line][telephone-line]]
+#+begin_src emacs-lisp
+(straight-use-package 'telephone-line)
+
+(setq telephone-line-lhs
+      '((evil   . (telephone-line-evil-tag-segment
+                   telephone-line-airline-position-segment))
+        (accent . (telephone-line-buffer-name-segment))
+        (nil    . (telephone-line-buffer-modified-segment)))
+
+      telephone-line-rhs
+      '((nil    . (telephone-line-minions-mode-segment))
+        (accent . (telephone-line-vc-segment))
+        (nil    . (telephone-line-misc-info-segment))))
+
+(setq display-time-24hr-format            t
+      display-time-day-and-date           t
+      display-time-default-load-average   nil
+      display-time-load-average           nil
+      display-time-load-average-threshold nil)
+
+(unless (equal "Battery status not available"
+               (battery))
+  (display-battery-mode +1))
+
+(display-time-mode +1)
+(telephone-line-mode +1)
+#+end_src
+
+
+** [[https://github.com/joostkremers/writeroom-mode][writeroom-mode]]
+For an uncluttered and minimalistic writing experience.
+#+begin_src emacs-lisp
+(straight-use-package 'writeroom-mode)
+(add-hook 'writeroom-mode-enable-hook #'(lambda () (text-scale-adjust 2)))
+(add-hook 'writeroom-mode-disable-hook #'(lambda () (text-scale-adjust 0)))
+#+end_src
+
+** [[https://github.com/Fuco1/smartparens][smartparens]]
+#+begin_src emacs-lisp
+(straight-use-package 'smartparens)
+(require 'smartparens-config)
+(smartparens-global-mode +1)
+#+end_src
+
+** [[https://github.com/Fanael/rainbow-delimiters][rainbow-delimiters-mode]]
+#+begin_src emacs-lisp
+(straight-use-package 'rainbow-delimiters)
+(add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
+#+end_src
+
+
+* Completion
+** vertico
+** consult
+** marginalia
+** embark
+** corfu
+** tempel
+** [[https://github.com/bdarcus/citar][citar]]
+Makes use of emacs' [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Minibuffer-Completion.html][completing-read]] for a convenient citation system. Works in
+org-mode!
+#+begin_src emacs-lisp
+(setq citar-bibliography '("~/Dropbox/org/bibs/references.bib"))
+
+(global-set-key (kbd "C-c b") 'citar-insert-citation)
+(define-key minibuffer-local-map (kbd "M-b") 'citar-insert-preset)
+
+;; use consult-completing-read for enhanced interface
+(advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
 #+end_src
 
 * org-mode
@@ -322,6 +427,8 @@ org-mode is absolutely brilliant. Currently this section is a bit
 /all-over-the-place/ and needs a proper "cleaning".
 ** org
 #+begin_src emacs-lisp
+(straight-use-package 'org)
+(straight-use-package 'org-contrib)
 (setq org-list-allow-alphabetical      t
       org-fontify-whole-heading-line   t
       org-startup-indented             t     ; indent sections
@@ -351,6 +458,7 @@ org-mode is absolutely brilliant. Currently this section is a bit
 
 ** [[https://github.com/abo-abo/org-download][org-download]]
 #+begin_src emacs-lisp
+(straight-use-package 'org-download)
 (setq-default org-download-image-dir "~/bilder/")
 (add-hook 'dired-mode-hook 'org-download-enable)
 (with-eval-after-load 'org
@@ -360,6 +468,9 @@ org-mode is absolutely brilliant. Currently this section is a bit
 * LaTeX
 ** auctex
 #+begin_src emacs-lisp
+(straight-use-package 'auctex)
+(straight-use-package 'auctex-latexmk)
+
 (add-hook 'LaTeX-mode-hook 'reftex-mode)
 (add-hook 'LaTeX-mode-hook 'LaTeX-math-mode)
 (add-hook 'LaTeX-mode-hook 'TeX-PDF-mode)
@@ -386,6 +497,7 @@ org-mode is absolutely brilliant. Currently this section is a bit
 
 ** [[https://github.com/cdominik/cdlatex][cdlatex]]
 #+begin_src emacs-lisp
+(straight-use-package 'cdlatex)
 (add-hook 'org-mode-hook   'turn-on-org-cdlatex)
 (add-hook 'LaTeX-mode-hook 'turn-on-cdlatex)
 
@@ -393,215 +505,137 @@ org-mode is absolutely brilliant. Currently this section is a bit
       '(("equation*" "\\begin{equation*}\n?\n\\end{equation*}\n" nil)))
 #+end_src
 
+
+
+* Other useful packages
+** [[https://github.com/Malabarba/elisp-bug-hunter][bug-hunter]]
+To debug various Lisp files
+#+begin_src emacs-lisp
+(straight-use-package 'bug-hunter)
+#+end_src
+
+
+** [[https://github.com/abo-abo/avy][avy]]
+#+begin_src emacs-lisp
+(global-set-key (kbd "C-;")   'avy-goto-char)
+(global-set-key (kbd "C-:")   'avy-goto-char-2)
+(global-set-key (kbd "M-g f") 'avy-goto-line)
+#+end_src
+
+** [[https://github.com/Fuco1/smartparens][smartparens]]
+#+begin_src emacs-lisp
+(straight-use-package 'smartparens)
+(require 'smartparens-config)
+(smartparens-global-mode +1)
+#+end_src
+
+
+
+
+
+
+
+
+
+** [[https://github.com/bbatsov/crux][crux]]
+#+begin_src emacs-lisp
+(global-set-key (kbd "C-c o") 'crux-open-with)
+
+(global-set-key [remap kill-line]       #'crux-smart-kill-line)
+(global-set-key [remap kill-whole-line] #'crux-kill-whole-line)
+(global-set-key (kbd "C-S-k")           #'crux-kill-line-backwards)
+(global-set-key (kbd "s-k")             #'crux-kill-and-join-forward)
+
+(global-set-key [remap move-beginning-of-line] #'crux-move-beginning-of-line)
+
+(global-set-key [(control shift return)] 'crux-smart-open-line-above)
+(global-set-key [(shift return)]         'crux-smart-open-line)
+
+(global-set-key (kbd "C-c n") 'crux-cleanup-buffer-or-region)
+(global-set-key (kbd "C-c f") 'crux-recentf-find-file)
+(global-set-key (kbd "C-c F") 'crux-recentf-find-directory)
+(global-set-key (kbd "C-c u") 'crux-view-url)
+(global-set-key (kbd "C-c e") 'crux-eval-and-replace)
+(global-set-key (kbd "C-c D") 'crux-delete-file-and-buffer)
+(global-set-key (kbd "C-c c") 'crux-copy-file-preserve-attributes)
+(global-set-key (kbd "C-c d") 'crux-duplicate-current-line-or-region)
+(global-set-key (kbd "C-c r") 'crux-rename-file-and-buffer)
+(global-set-key (kbd "C-c t") 'crux-visit-term-buffer)
+(global-set-key (kbd "C-c k") 'crux-kill-other-buffers)
+
+
+(global-set-key (kbd "C-c M-d") 'crux-duplicate-and-comment-current-line-or-region)
+(global-set-key (kbd "C-c z")   'crux-indent-defun)
+(global-set-key (kbd "C-c TAB") 'crux-indent-rigidly-and-copy-to-clipboard)
+
+(global-set-key (kbd "C-x 4 t") 'crux-transpose-windows)
+
+(global-set-key (kbd "C-x C-u") 'crux-upcase-region)
+(global-set-key (kbd "C-x C-l") 'crux-downcase-region)
+(global-set-key (kbd "C-x M-c") 'crux-capitalize-region)
+#+end_src
+
+
+
+
+* EVERYTHING BELOW IS OLD!
+
+
+* Startup and early configuration
+
+
+
+* Packages
+
+** package install
+#+begin_src emacs-lisp
+(setq knube/packages '(auctex
+                       auctex-latexmk
+
+                       avy
+
+
+                       citar
+                       company
+                       company-prescient
+                       consult
+                       crux
+                       embark
+                       embark-consult
+
+                       marginalia
+
+
+
+
+                       undo-fu
+                       which-key
+                       writeroom-mode
+                       yasnippet))
+(dolist (p knube/packages)
+  (straight-use-package p))
+#+end_src
+
+
+
+
+* org-mode
+
+
+* LaTeX
+*
+
 * UI
 Everything remotely "UI"-related goes here.
-** [[https://github.com/abo-abo/ace-window][ace-window]]
-#+begin_src emacs-lisp
-(global-set-key (kbd "s-w") 'ace-window)
-(global-set-key [remap other-window] 'ace-window)
-#+end_src
 
-** fonts
-#+begin_src emacs-lisp
-(set-face-attribute 'default nil
-                    :family "Iosevka Fixed Extended"
-                    :height 170
-                    :weight 'medium)
-(set-face-attribute 'fixed-pitch nil
-                    :family "Iosevka Fixed Extended"
-                    :height 170
-                    :weight 'medium)
-(set-face-attribute 'variable-pitch nil
-                    :family "Iosevka Fixed Extended"
-                    :height 170
-                    :weight 'medium)
-
-#+end_src
-
-** org-blocks-fix
-emacs 27 introduced the new =:extend= face attribute. In turn, this makes my
-org-blocks look weird when switching themes. This fixes it?
-#+begin_src emacs-lisp
-(defun knube/fix-org-blocks ()
-  "Extend org-block-line"
-  (interactive)
-  (eval-after-load 'org
-    (lambda ()
-      (set-face-attribute
-       'org-block nil :extend t)
-      (set-face-attribute 'org-block-begin-line nil :extend t
-                          :underline nil :overline nil
-                          :slant 'italic)
-      (set-face-attribute 'org-block-end-line nil :extend t
-                          :underline nil :overline nil
-                          :slant 'italic))))
-#+end_src
-
-** [[https://protesilaos.com/modus-themes/][modus-themes]]
-We manually switch between light and dark theme with =M-x knube/toggle-themes=.
-#+begin_src emacs-lisp
-(setq modus-themes-org-blocks 'gray-background)
-
-(modus-themes-load-themes)
-;(modus-themes-load-operandi)
-
-(setq knube/dark-theme-enabled-p nil)
-
-(setq circadian-themes '((:sunrise . modus-operandi)
-                         (:sunset  . modus-vivendi)))
-(circadian-setup)
-
-(knube/fix-org-blocks)
-
-(defun knube/toggle-themes ()
-  "Toggle light/dark theme."
-  (interactive)
-  (modus-themes-toggle)
-  (setq knube/dark-theme-enabled-p (not knube/dark-theme-enabled-p))
-  (knube/fix-org-blocks))
-#+end_src
-
-** [[https://protesilaos.com/emacs/pulsar][pulsar]]
-#+begin_src emacs-lisp
-(require 'pulsar)
-
-(setq pulsar-pulse-functions
-      '(isearch-repeat-forward
-        isearch-repeat-backward
-        recenter-top-bottom
-        move-to-window-line-top-bottom
-        reposition-window
-        bookmark-jump
-        other-window
-        delete-window
-        delete-other-windows
-        forward-page
-        backward-page
-        scroll-up-command
-        scroll-down-command
-        windmove-right
-        windmove-left
-        windmove-up
-        windmove-down
-        windmove-swap-states-right
-        windmove-swap-states-left
-        windmove-swap-states-up
-        windmove-swap-states-down
-        tab-new
-        tab-close
-        tab-next
-        org-next-visible-heading
-        org-previous-visible-heading
-        org-forward-heading-same-level
-        org-backward-heading-same-level
-        outline-backward-same-level
-        outline-forward-same-level
-        outline-next-visible-heading
-        outline-previous-visible-heading
-        outline-up-heading))
-
-(setq pulsar-pulse t)
-(setq pulsar-delay 0.055)
-(setq pulsar-iterations 10)
-(setq pulsar-face 'pulsar-magenta)
-(setq pulsar-highlight-face 'pulsar-yellow)
-
-(pulsar-global-mode 1)
-
-;; OR use the local mode for select mode hooks
-
-(dolist (hook '(org-mode-hook emacs-lisp-mode-hook))
-  (add-hook hook #'pulsar-mode))
-
-;; pulsar does not define any key bindings.  This is just a sample that
-;; respects the key binding conventions.  Evaluate:
-;;
-;;     (info "(elisp) Key Binding Conventions")
-;;
-;; The author uses C-x l for `pulsar-pulse-line' and C-x L for
-;; `pulsar-highlight-line'.
-(let ((map global-map))
-  (define-key map (kbd "C-c h p") #'pulsar-pulse-line)
-  (define-key map (kbd "C-c h h") #'pulsar-highlight-line))
-#+end_src
-
-** [[https://protesilaos.com/emacs/logos][logos]]
-#+begin_src emacs-lisp
-;;If you want to use outlines instead of page breaks (the ^L)
-(with-eval-after-load 'org
-  (setq logos-outlines-are-pages t)
-  (setq logos-outline-regexp-alist
-        `((emacs-lisp-mode . "^;;;+ ")
-          (org-mode . "^\\*+ +")
-          (t . ,(or outline-regexp logos--page-delimiter)))))
-
-;; These apply when `logos-focus-mode' is enabled.  Their value is
-;; buffer-local.
-(setq-default logos-hide-mode-line nil
-              logos-scroll-lock nil
-              logos-variable-pitch nil
-              logos-indicate-buffer-boundaries nil
-              logos-buffer-read-only nil
-              logos-olivetti nil)
-
-(let ((map global-map))
-  (define-key map [remap narrow-to-region] #'logos-narrow-dwim)
-  (define-key map [remap forward-page]     #'logos-forward-page-dwim)
-  (define-key map [remap backward-page]    #'logos-backward-page-dwim))
-#+end_src
 
 ** modeline
-*** [[https://github.com/tarsius/minions][minions]]
-Conveniently stuffs all minor modes into one little icon.
-#+begin_src emacs-lisp
-(setq minions-mode-line-lighter    "☰"
-      minions-mode-line-delimiters '("" . ""))
 
-(minions-mode +1)
-#+end_src
-
-*** [[https://github.com/dbordak/telephone-line][telephone-line]]
-#+begin_src emacs-lisp
-(setq telephone-line-lhs
-      '((evil   . (telephone-line-evil-tag-segment
-                   telephone-line-airline-position-segment))
-        (accent . (telephone-line-buffer-name-segment))
-        (nil    . (telephone-line-buffer-modified-segment)))
-
-      telephone-line-rhs
-      '((nil    . (telephone-line-minions-mode-segment))
-        (accent . (telephone-line-vc-segment))
-        (nil    . (telephone-line-misc-info-segment))))
-
-(setq display-time-24hr-format            t
-      display-time-day-and-date           t
-      display-time-default-load-average   nil
-      display-time-load-average           nil
-      display-time-load-average-threshold nil)
-
-(unless (equal "Battery status not available"
-               (battery))
-  (display-battery-mode +1))
-
-(display-time-mode +1)
-(telephone-line-mode +1)
-#+end_src
-
-** [[https://github.com/joostkremers/writeroom-mode][writeroom-mode]]
-For an uncluttered and minimalistic writing experience.
-#+begin_src emacs-lisp
-(add-hook 'writeroom-mode-enable-hook #'(lambda () (text-scale-adjust 2)))
-(add-hook 'writeroom-mode-disable-hook #'(lambda () (text-scale-adjust 0)))
-#+end_src
-
-** [[https://github.com/Fanael/rainbow-delimiters][rainbow-delimiters-mode]]
-#+begin_src emacs-lisp
-(add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
-#+end_src
 
 * Completion
+Redo this with vertico, corfu and tempel
 ** emacs completion
-*** [[https://github.com/raxod502/selectrum][selectrum]]
+*** [[https://github.com/raxod502/selectrum][selectrum]] REPLACE
 #+begin_src emacs-lisp
 (selectrum-mode +1)
 (selectrum-prescient-mode +1)
@@ -737,7 +771,7 @@ For an uncluttered and minimalistic writing experience.
 #+end_src
 
 ** code completion
-*** [[http://company-mode.github.io/][company-mode]]
+*** [[http://company-mode.github.io/][company-mode]] REPLACE
 #+begin_src emacs-lisp
 (setq company-idle-delay                0.5
       company-show-numbers              t
@@ -753,7 +787,7 @@ For an uncluttered and minimalistic writing experience.
 (company-prescient-mode +1)
 #+end_src
 
-** [[https://github.com/joaotavora/yasnippet][yasnippet]]
+** [[https://github.com/joaotavora/yasnippet][yasnippet]] REPLACE
 #+begin_src emacs-lisp
 (setq yas-snippet-dirs '("~/.emacs.d/snippets"))
 
@@ -761,73 +795,9 @@ For an uncluttered and minimalistic writing experience.
 #+end_src
 
 * Citations
-** citar
-[[https://github.com/bdarcus/citar][citar]] uses emacs' [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Minibuffer-Completion.html][completing-read]] for a convenient citation system.
-Works in org-mode!
-#+begin_src emacs-lisp
-(setq citar-bibliography '("~/Dropbox/org/bibs/references.bib"))
-
-(global-set-key (kbd "C-c b") 'citar-insert-citation)
-(define-key minibuffer-local-map (kbd "M-b") 'citar-insert-preset)
-
-;; use consult-completing-read for enhanced interface
-(advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
-#+end_src
+*
 
 * Useful stuff
-** [[https://github.com/abo-abo/avy][avy]]
-#+begin_src emacs-lisp
-(global-set-key (kbd "C-;")   'avy-goto-char)
-(global-set-key (kbd "C-:")   'avy-goto-char-2)
-(global-set-key (kbd "M-g f") 'avy-goto-line)
-#+end_src
-
-** [[https://github.com/justbur/emacs-which-key][which-key]]
-#+begin_src emacs-lisp
-(setq which-key-idle-delay    0.5
-      which-key-separator     " "
-      which-key-sort-order    'which-key-description-order
-      which-key-prefix-prefix "+")
-(which-key-mode +1)
-#+end_src
-
-** [[https://github.com/bbatsov/crux][crux]]
-#+begin_src emacs-lisp
-(global-set-key (kbd "C-c o") 'crux-open-with)
-
-(global-set-key [remap kill-line]       #'crux-smart-kill-line)
-(global-set-key [remap kill-whole-line] #'crux-kill-whole-line)
-(global-set-key (kbd "C-S-k")           #'crux-kill-line-backwards)
-(global-set-key (kbd "s-k")             #'crux-kill-and-join-forward)
-
-(global-set-key [remap move-beginning-of-line] #'crux-move-beginning-of-line)
-
-(global-set-key [(control shift return)] 'crux-smart-open-line-above)
-(global-set-key [(shift return)]         'crux-smart-open-line)
-
-(global-set-key (kbd "C-c n") 'crux-cleanup-buffer-or-region)
-(global-set-key (kbd "C-c f") 'crux-recentf-find-file)
-(global-set-key (kbd "C-c F") 'crux-recentf-find-directory)
-(global-set-key (kbd "C-c u") 'crux-view-url)
-(global-set-key (kbd "C-c e") 'crux-eval-and-replace)
-(global-set-key (kbd "C-c D") 'crux-delete-file-and-buffer)
-(global-set-key (kbd "C-c c") 'crux-copy-file-preserve-attributes)
-(global-set-key (kbd "C-c d") 'crux-duplicate-current-line-or-region)
-(global-set-key (kbd "C-c r") 'crux-rename-file-and-buffer)
-(global-set-key (kbd "C-c t") 'crux-visit-term-buffer)
-(global-set-key (kbd "C-c k") 'crux-kill-other-buffers)
-
-
-(global-set-key (kbd "C-c M-d") 'crux-duplicate-and-comment-current-line-or-region)
-(global-set-key (kbd "C-c z")   'crux-indent-defun)
-(global-set-key (kbd "C-c TAB") 'crux-indent-rigidly-and-copy-to-clipboard)
-
-(global-set-key (kbd "C-x 4 t") 'crux-transpose-windows)
-
-(global-set-key (kbd "C-x C-u") 'crux-upcase-region)
-(global-set-key (kbd "C-x C-l") 'crux-downcase-region)
-(global-set-key (kbd "C-x M-c") 'crux-capitalize-region)
-#+end_src
 
 ** [[https://github.com/emacsmirror/undo-fu][undo-fu]]
 #+begin_src emacs-lisp
