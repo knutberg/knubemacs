@@ -36,11 +36,6 @@
       (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
 
-(defconst *IS-MAC*    (eq system-type 'darwin))
-(defconst *IS-WIN*    (eq system-type 'windows-nt))
-(defconst *IS-WIN-WSL (and (eq system-type 'windows-nt) (getenv "WSLENV")))
-(defconst *IS-LINUX*  (eq system-type 'gnu/linux))
-
 (setq utf-translate-cjk-mode nil     ; disable CJK coding/encoding
       locale-coding-system   'utf-8)
 (set-language-environment    'utf-8)
@@ -49,11 +44,10 @@
 (set-selection-coding-system 'utf-8)
 (prefer-coding-system        'utf-8)
 
-(when *IS-MAC*
-  (setq mac-command-modifier      'meta
-        mac-option-modifier       nil
-        mac-right-option-modifier nil
-        mac-function-modifier     'super))
+(setq mac-command-modifier      'meta
+      mac-option-modifier       nil
+      mac-right-option-modifier nil
+      mac-function-modifier     'super)
 
 ;; Increase this if stuttering occurs. Decrease if freezes occurs.
 (defvar knube-gc-cons-threshold (* 64 1024 1024))
@@ -95,8 +89,6 @@
       mouse-wheel-progressive-speed   nil
       mouse-yank-at-point             t)
 
-(add-hook 'emacs-startup-hook 'toggle-frame-maximized)
-
 (straight-use-package 'no-littering)
 
 (setq auto-save-file-name-transforms
@@ -112,20 +104,59 @@
 (add-to-list 'recentf-exclude no-littering-var-directory)
 (add-to-list 'recentf-exclude no-littering-etc-directory)
 
-(when *IS-MAC*
-  (straight-use-package 'osx-trash)
-  (osx-trash-setup)
-  (setq delete-by-moving-to-trash t))
+(straight-use-package 'osx-trash)
+(osx-trash-setup)
+(setq delete-by-moving-to-trash t)
 
 (straight-use-package 'exec-path-from-shell)
-
 (exec-path-from-shell-initialize)
 
 (straight-use-package 'which-key)
-
 (which-key-mode +1)
 
-(straight-use-package 'general)
+(straight-use-package 'bug-hunter)
+
+(straight-use-package 'avy)
+
+(global-set-key (kbd "C-;")   #'avy-goto-char)
+(global-set-key (kbd "C-:")   #'avy-goto-char-2)
+(global-set-key (kbd "M-g f") #'avy-goto-line)
+
+(straight-use-package 'crux)
+(global-set-key (kbd "C-c o") #'crux-open-with)
+
+(global-set-key [remap kill-line]       #'crux-smart-kill-line)
+(global-set-key [remap kill-whole-line] #'crux-kill-whole-line)
+(global-set-key (kbd "C-S-k")           #'crux-kill-line-backwards)
+(global-set-key (kbd "s-k")             #'crux-kill-and-join-forward)
+
+(global-set-key [remap move-beginning-of-line] #'crux-move-beginning-of-line)
+
+(global-set-key [(control shift return)] 'crux-smart-open-line-above)
+(global-set-key [(shift return)]         'crux-smart-open-line)
+
+(global-set-key (kbd "C-c n") 'crux-cleanup-buffer-or-region)
+(global-set-key (kbd "C-c f") 'crux-recentf-find-file)
+(global-set-key (kbd "C-c F") 'crux-recentf-find-directory)
+(global-set-key (kbd "C-c u") 'crux-view-url)
+(global-set-key (kbd "C-c e") 'crux-eval-and-replace)
+(global-set-key (kbd "C-c D") 'crux-delete-file-and-buffer)
+(global-set-key (kbd "C-c c") 'crux-copy-file-preserve-attributes)
+(global-set-key (kbd "C-c d") 'crux-duplicate-current-line-or-region)
+(global-set-key (kbd "C-c r") 'crux-rename-file-and-buffer)
+(global-set-key (kbd "C-c t") 'crux-visit-term-buffer)
+(global-set-key (kbd "C-c k") 'crux-kill-other-buffers)
+
+
+(global-set-key (kbd "C-c M-d") 'crux-duplicate-and-comment-current-line-or-region)
+(global-set-key (kbd "C-c z")   'crux-indent-defun)
+(global-set-key (kbd "C-c TAB") 'crux-indent-rigidly-and-copy-to-clipboard)
+
+(global-set-key (kbd "C-x 4 t") 'crux-transpose-windows)
+
+(global-set-key (kbd "C-x C-u") 'crux-upcase-region)
+(global-set-key (kbd "C-x C-l") 'crux-downcase-region)
+(global-set-key (kbd "C-x M-c") 'crux-capitalize-region)
 
 (add-hook 'prog-mode-hook   'subword-mode)
 (add-hook 'before-save-hook 'delete-trailing-whitespace)
@@ -153,6 +184,7 @@
               abbrev-mode            t
               dired-listing-switches "-alh")
 
+
 (require 'uniquify)
 (setq uniquify-buffer-name-style          'forward ; unique buffer names
       show-paren-delay                    0.0
@@ -179,60 +211,47 @@
 
 (set-face-attribute 'default nil
                     :family "Iosevka"
-                    :height 180
-                    :weight 'medium)
+                    :height 160
+                    :weight 'light)
 (set-face-attribute 'fixed-pitch nil
                     :family "Iosevka"
-                    :height 180
-                    :weight 'medium)
+                    :height 160
+                    :weight 'light)
 (set-face-attribute 'variable-pitch nil
                     :family "Iosevka"
-                    :height 180
-                    :weight 'medium)
+                    :height 160
+                    :weight 'light)
 
 (straight-use-package 'modus-themes)
 
 (setq modus-themes-org-blocks 'gray-background)
-
-(modus-themes-load-themes)
-;(modus-themes-load-operandi) ; light theme
-(modus-themes-load-vivendi)  ; dark theme
-
+(load-theme 'modus-operandi :no-confirm)
+; (load-theme 'modus-vivendi :no-confirm)
 (global-hl-line-mode +1)
 
-(straight-use-package 'minions)
-(setq minions-mode-line-lighter    "☰"
-      minions-mode-line-delimiters '("" . ""))
+(straight-use-package 'nano-modeline)
 
-(minions-mode +1)
+(nano-modeline-mode)
 
-(straight-use-package 'telephone-line)
-
-(setq telephone-line-lhs
-      '((evil   . (telephone-line-evil-tag-segment
-                   telephone-line-airline-position-segment))
-        (accent . (telephone-line-buffer-name-segment))
-        (nil    . (telephone-line-buffer-modified-segment)))
-
-      telephone-line-rhs
-      '((nil    . (telephone-line-minions-mode-segment))
-        (accent . (telephone-line-vc-segment))
-        (nil    . (telephone-line-misc-info-segment))))
-
-(setq display-time-24hr-format            t
-      display-time-day-and-date           t
-      display-time-default-load-average   nil
-      display-time-load-average           nil
-      display-time-load-average-threshold nil)
-
-(unless (equal "Battery status not available"
-               (battery))
-  (display-battery-mode +1))
-
-(display-time-mode   +1)
-(telephone-line-mode +1)
+(setq default-frame-alist
+      (append (list
+               '(min-height . 1)  '(height . 45)
+               '(min-width  . 1)  '(width  . 81)
+               '(vertical-scroll-bars . nil)
+               '(internal-border-width . 24)
+               '(left-fringe . 0)
+               '(right-fringe . 0)
+               '(tool-bar-lines . 0)
+               '(menu-bar-lines . 0))))
 
 (straight-use-package 'writeroom-mode)
+
+(add-hook 'after-init-hook 'toggle-frame-maximized)
+
+(global-set-key (kbd "<f9>")  #'writeroom-mode)
+(global-set-key (kbd "<f10>") #'toggle-frame-maximized)
+(global-set-key (kbd "<f11>") #'toggle-frame-fullscreen)
+(global-set-key (kbd "<f12>") #'toggle-frame-tab-bar)
 
 (add-hook 'writeroom-mode-enable-hook  #'(lambda () (text-scale-adjust 2)))
 (add-hook 'writeroom-mode-disable-hook #'(lambda () (text-scale-adjust 0)))
@@ -251,10 +270,10 @@
 (straight-use-package 'savehist)
 (straight-use-package 'orderless)
 
-(setq completion-styles             '(orderless basic)
-      completion-category-defaults  nil
-      completion-category-overrides '((file (styles partial-completion)))
-      vertico-cycle                 t)
+(setq completion-styles               '(orderless basic)
+        completion-category-defaults  nil
+        completion-category-overrides '((file (styles . (partial-completion))))
+        vertico-cycle                 t)
 
 ;; Add prompt indicator to `completing-read-multiple'.
 ;; We display [CRM<separator>], e.g., [CRM,] if the separator is a comma.
@@ -282,10 +301,8 @@
 (vertico-mode  +1)
 (savehist-mode +1)
 
-(general-define-key
-  :keymaps 'vertico-map
-  "C-j"    #'vertico-next
-  "C-k"    #'vertico-previous)
+(define-key vertico-map (kbd "C-j") #'vertico-next)
+(define-key vertico-map (kbd "C-k") #'vertico-previous)
 
 (straight-use-package 'marginalia)
 
@@ -293,30 +310,68 @@
 
 (straight-use-package 'consult)
 
-(general-define-key
- [remap apropos]                       #'consult-apropos
- [remap bookmark-jump]                 #'consult-bookmark
- [remap evil-show-marks]               #'consult-mark
- [remap evil-show-jumps]               #'+vertico/jump-list
- [remap evil-show-registers]           #'consult-register
- [remap goto-line]                     #'consult-goto-line
- [remap imenu]                         #'consult-imenu
- [remap locate]                        #'consult-locate
- [remap load-theme]                    #'consult-theme
- [remap man]                           #'consult-man
- [remap recentf-open-files]            #'consult-recent-file
- [remap switch-to-buffer]              #'consult-buffer
- [remap switch-to-buffer-other-window] #'consult-buffer-other-window
- [remap switch-to-buffer-other-frame]  #'consult-buffer-other-frame
- [remap yank-pop]                      #'consult-yank-pop
- [remap persp-switch-to-buffer]        #'+vertico/switch-workspace-buffer)
+;; C-c bindings in `mode-specific-map'
+(global-set-key (kbd "C-c M-x")     #'consult-mode-command)
+(global-set-key (kbd "C-c h")       #'consult-history)
+(global-set-key (kbd "C-c k")       #'consult-kmacro)
+(global-set-key (kbd "C-c m")       #'consult-man)
+(global-set-key (kbd "C-c i")       #'consult-info)
+(global-set-key [remap Info-search] #'consult-info)
+
+;; C-x bindings in `ctl-x-map'
+(global-set-key (kbd "C-x M-:") #'consult-complex-command)     ;; orig. repeat-complex-command
+(global-set-key (kbd "C-x b")   #'consult-buffer)              ;; orig. switch-to-buffer
+(global-set-key (kbd "C-x 4 b") #'consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
+(global-set-key (kbd "C-x 5 b") #'consult-buffer-other-frame)  ;; orig. switch-to-buffer-other-frame
+(global-set-key (kbd "C-x r b") #'consult-bookmark)            ;; orig. bookmark-jump
+(global-set-key (kbd "C-x p b") #'consult-project-buffer)      ;; orig. project-switch-to-buffer
+
+;; Custom M-# bindings for fast register access
+(global-set-key (kbd "M-#")   #'consult-register-load)
+(global-set-key (kbd "M-'")   #'consult-register-store) ;; orig. abbrev-prefix-mark (unrelated)
+(global-set-key (kbd "C-M-#") #'consult-register)
+
+;; Other custom bindings
+(global-set-key (kbd "M-y") #'consult-yank-pop) ;; orig. yank-pop
+
+;; M-g bindings in `goto-map'
+(global-set-key (kbd "M-g e")   #'consult-compile-error)
+(global-set-key (kbd "M-g f")   #'consult-flymake)   ;; Alternative: consult-flycheck
+(global-set-key (kbd "M-g g")   #'consult-goto-line) ;; orig. goto-line
+(global-set-key (kbd "M-g M-g") #'consult-goto-line) ;; orig. goto-line
+(global-set-key (kbd "M-g o")   #'consult-outline)   ;; Alternative: consult-org-heading
+(global-set-key (kbd "M-g m")   #'consult-mark)
+(global-set-key (kbd "M-g k")   #'consult-global-mark)
+(global-set-key (kbd "M-g i")   #'consult-imenu)
+(global-set-key (kbd "M-g I")   #'consult-imenu-multi)
+
+;; M-s bindings in `search-map'
+(global-set-key (kbd "M-s d") #'consult-find)
+(global-set-key (kbd "M-s D") #'consult-locate)
+(global-set-key (kbd "M-s g") #'consult-grep)
+(global-set-key (kbd "M-s G") #'consult-git-grep)
+(global-set-key (kbd "M-s r") #'consult-ripgrep)
+(global-set-key (kbd "M-s l") #'consult-line)
+(global-set-key (kbd "M-s L") #'consult-line-multi)
+(global-set-key (kbd "M-s k") #'consult-keep-lines)
+(global-set-key (kbd "M-s u") #'consult-focus-lines)
+
+;; Isearch integration
+(global-set-key (kbd "M-s e") #'consult-isearch-history)
+(define-key isearch-mode-map (kbd "M-e") #'consult-isearch-history)   ;; orig. isearch-edit-string
+(define-key isearch-mode-map (kbd "M-s e") #'consult-isearch-history) ;; orig. isearch-edit-string
+(define-key isearch-mode-map (kbd "M-s l") #'consult-line)            ;; needed by consult-line to detect isearch
+(define-key isearch-mode-map (kbd "M-s L") #'consult-line-multi)      ;; needed by consult-line to detect isearch
+
+;; Minibuffer history
+(define-key minibuffer-local-map (kbd "M-s") #'consult-history) ;; orig. next-matching-history-element
+(define-key minibuffer-local-map (kbd "M-r") #'consult-history) ;; orig. previous-matching-history-element
 
 (straight-use-package 'embark)
 (straight-use-package 'embark-consult)
 
-(general-define-key
- [remap describe-bindings] #'embark-bindings
- "C-."                     #'embark-act)
+(global-set-key [remap describe-bindings] #'embark-bindings)
+(global-set-key (kbd "C-.")               #'embark-act)
 
 ;; Use Embark to show bindings in a key prefix with `C-h`
 (setq prefix-help-command #'embark-prefix-help-command)
@@ -325,76 +380,69 @@
   (add-hook 'embark-collect-mode-hook #'consult-preview-at-point-mode))
 
 (straight-use-package 'corfu)
-(straight-use-package 'corfu-doc)
 
-(setq corfu-cycle              t     ; Allows cycling through candidates
-      corfu-auto               t     ; Enable auto completion
-      corfu-auto-prefix        2     ; Complete with less prefix keys
-      corfu-auto-delay         0.0   ; No delay for completion
-      corfu-echo-documentation 0.25) ; Echo docs for current completion option
 
-(global-corfu-mode 1)
+(global-corfu-mode)
 
-(add-hook 'corfu-mode-hook #'corfu-doc-mode)
+;; Enable auto completion and configure quitting
+(setq corfu-auto t
+      corfu-quit-no-match 'separator
+      corfu-preselect 'prompt) ;; Always preselect the prompt
 
-(general-define-key
- :keymaps 'corfu-map
- "M-p" #'corfu-doc-scroll-down
- "M-n" #'corfu-doc-scroll-up
- "M-d" #'corfu-doc-toggle)
+(define-key corfu-map (kbd "TAB")   #'corfu-next)
+(define-key corfu-map (kbd "S-TAB") #'corfu-previous)
+
+;; TAB cycle if there are only few candidates
+(setq completion-cycle-threshold 3)
+
+;; Emacs 28: Hide commands in M-x which do not apply to the current mode.
+;; Corfu commands are hidden, since they are not supposed to be used via M-x.
+(setq read-extended-command-predicate #'command-completion-default-include-p)
+
+;; Enable indentation+completion using the TAB key.
+;; `completion-at-point' is often bound to M-TAB.
+(setq tab-always-indent 'complete)
+
+;; Swap M-/ and C-M-/
+(global-set-key (kbd "M-/")   #'dabbrev-completion)
+(global-set-key (kbd "C-M-/") #'dabbrev-expand)
+
+;; Other useful Dabbrev configurations.
+(setq dabbrev-ignored-buffer-regexps '("\\.\\(?:pdf\\|jpe?g\\|png\\)\\'"))
+
+
 
 (straight-use-package 'cape)
 
-(add-to-list 'completion-at-point-functions #'cape-file)
+(global-set-key (kbd "C-c p p") #'completion-at-point)
+
 (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+(add-to-list 'completion-at-point-functions #'cape-file)
+(add-to-list 'completion-at-point-functions #'cape-elisp-block)
+;;(add-to-list 'completion-at-point-functions #'cape-history)
+;;(add-to-list 'completion-at-point-functions #'cape-keyword)
 (add-to-list 'completion-at-point-functions #'cape-tex)
+;;(add-to-list 'completion-at-point-functions #'cape-sgml)
+;;(add-to-list 'completion-at-point-functions #'cape-rfc1345)
+;;(add-to-list 'completion-at-point-functions #'cape-abbrev)
+;;(add-to-list 'completion-at-point-functions #'cape-dict)
+(add-to-list 'completion-at-point-functions #'cape-symbol)
+;;(add-to-list 'completion-at-point-functions #'cape-line)
+
+(straight-use-package 'yasnippet)
+
+(setq yas-snippet-dirs '("~/.emacs.d/snippets"))
+
+(yas-global-mode +1)
 
 (straight-use-package 'citar)
 
 (setq citar-bibliography '("~/Dropbox/org/bibs/references.bib"))
+(add-hook 'LaTeX-mode-hook #'citar-capf-setup)
+(add-hook 'org-mode-hook   #'citar-capf-setup)
 
-(general-define-key
- "C-c b" #'citar-insert-citation)
-
-(general-define-key
- :keymaps 'minibuffer-local-map
- "M-b" #'citar-insert-citation)
-
-;; use consult-completing-read for enhanced interface
-(advice-add #'completing-read-multiple :override #'consult-completing-read-multiple)
-
-(straight-use-package 'evil)
-
-(setq evil-want-integration         t
-      evil-want-keybinding          nil
-      evil-want-C-i-jump            nil
-      evil-respect-visual-line-mode t
-      evil-undo-system              'undo-redo
-      evil-want-C-i-jump            t
-      evil-want-Y-yank-to-eol       t
-      evil-want-fine-undo           t)
-
-(evil-mode +1)
-
-(evil-select-search-module 'evil-search-module 'evil-search)
-
-(straight-use-package 'evil-collection)
-
-(evil-collection-init)
-
-(straight-use-package 'evil-nerd-commenter)
-
-(evilnc-default-hotkeys)
-
-(straight-use-package 'evil-surround)
-
-(global-evil-surround-mode +1)
-
-(straight-use-package 'evil-embrace)
-
-(add-hook 'org-mode-hook 'embrace-org-mode-hook)
-
-(evil-embrace-enable-evil-surround-integration)
+(straight-use-package 'citar-embark)
+(citar-embark-mode)
 
 (straight-use-package 'org)
 (straight-use-package 'org-contrib)
@@ -407,7 +455,7 @@
       org-src-tab-acts-natively        t     ; tab works as in any major mode
       org-src-preserve-indentation     t
       org-log-into-drawer              t     ; wtf is this?
-      org-src-fontify-natively         t     ; highlight code
+      org-src-fontify-natively         nil   ; fontify code
       org-log-done                     'time ; add dates on completion of TODOs
       org-support-shift-select         t     ; select holding down shift
       org-startup-truncated            nil
@@ -415,6 +463,7 @@
       org-agenda-files                 '("~/Dropbox/org/agenda/")
       org-ellipsis                     " ⤵"
       org-src-window-setup             'current-window
+      org-latex-compiler               "xelatex"
       org-latex-pdf-process            (list "latexmk -xelatex -f %f"))
 
 (add-hook 'org-mode-hook (lambda ()
@@ -425,18 +474,67 @@
                              '((emacs-lisp . t)
                                (latex      . t)))
 
+(require 'ox-latex)
+
+(with-eval-after-load 'ox-latex
+  (setq org-latex-classes nil)
+  (add-to-list 'org-latex-classes
+               '("article"
+"\\documentclass{article}
+
+[DEFAULT-PACKAGES]
+
+\\usepackage[utf8]{inputenc}
+\\usepackage[T1]{fontenc}
+\\usepackage{fontspec}
+\\usepackage{tikz-cd}
+"
+                 ("\\section{%s}" . "\\section*{%s}")
+                 ("\\subsection{%s}" . "\\subsection*{%s}")
+                 ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
+                 ("\\paragraph{%s}" . "\\paragraph*{%s}")
+                 ("\\subparagraph{%s}" . "\\subparagraph*{%s}")))
+
+  (add-to-list 'org-latex-classes
+               '("beamer"
+"\\documentclass{beamer}
+
+[DEFAULT-PACKAGES]
+
+\\usepackage[utf8]{inputenc}
+\\usepackage[T1]{fontenc}
+\\usepackage{fontspec}
+\\usepackage{tikz-cd}
+
+\\usetheme{metropolis}
+\\usefonttheme{professionalfonts}
+\\mode<presentation>{}
+\\metroset{block=fill}
+\\hypersetup{colorlinks=true,urlcolor=[RGB]{0 84 147},citecolor=[RGB]{0 144 81}}
+\\setbeamertemplate{navigation symbols}{}
+\\setbeamertemplate{footline}{
+  \\hspace{1pt}
+  \\includegraphics[height=0.7cm]{/Users/knube/logo_NORD_transp.png}
+  \\vspace{1pt} \\hfill \\inserttitle \\quad
+  \\insertframenumber\\,/\\,\\inserttotalframenumber\\kern1em}
+\\setbeamertemplate{logo}{}
+\\setbeamertemplate{frametitle continuation}{(\\insertcontinuationcount)}"
+
+                 ("\\section{%s}"       . "\\section*{%s}")
+                 ("\\subsection{%s}"    . "\\subsection*{%s}")
+                 ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
+                 ("\\paragraph{%s}"     . "\\paragraph*{%s}")
+                 ("\\subparagraph{%s}"  . "\\subparagraph*{%s}"))))
+
 (straight-use-package 'org-download)
 
-(setq-default org-download-image-dir "~/bilder/")
+(setq-default org-download-image-dir "./bilder/")
+(setq org-download-display-inline-images nil)
 
 (add-hook 'dired-mode-hook 'org-download-enable)
 
 (with-eval-after-load 'org
     (org-download-enable))
-
-(straight-use-package 'org-modern)
-
-(global-org-modern-mode +1)
 
 (straight-use-package 'auctex)
 (straight-use-package '(auctex-latexmk :type git :host github :repo "knutberg/auctex-latexmk"))
@@ -466,17 +564,8 @@
 
 (straight-use-package 'cdlatex)
 
-(add-hook 'org-mode-hook   'turn-on-org-cdlatex)
-(add-hook 'LaTeX-mode-hook 'turn-on-cdlatex)
+(add-hook 'org-mode-hook   #'turn-on-org-cdlatex)
+(add-hook 'LaTeX-mode-hook #'turn-on-cdlatex)
 
 (setq cdlatex-env-alist
       '(("equation*" "\\begin{equation*}\n?\n\\end{equation*}\n" nil)))
-
-(straight-use-package 'bug-hunter)
-
-(straight-use-package 'avy)
-
-(general-define-key
- "C-;"   #'avy-goto-char
- "C-:"   #'avy-goto-char-2
- "M-g f" #'avy-goto-line)
