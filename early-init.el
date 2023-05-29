@@ -6,7 +6,7 @@
       gc-cons-percentage        0.6                  ; set to 0.1 later
       debug-on-error            t                    ; reset to nil later
       site-run-file             nil                  ; disable site-start.el
-      package-enable-at-startup nil)                 ; we use straight.el
+      package-enable-at-startup nil)                 ; we use elpaca
 
 (menu-bar-mode   -1)
 (tool-bar-mode   -1)

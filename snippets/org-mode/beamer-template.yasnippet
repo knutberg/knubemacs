@@ -1,0 +1,32 @@
+# -*- mode: snippet -*-
+# name: beamer-template
+# key: <beam
+# --
+#+TITLE: ${1:Tittel}
+#+SUBTITLE: ${2:Undertittel}
+#+AUTHOR: Knut Berg, \small \href{mailto:knut.berg@nord.no}{knut.berg@nord.no}
+#+EMAIL: knut.berg@nord.no
+#+DATE: ${3:\today}
+#+LANGUAGE: no
+
+#+OPTIONS: H:1 num:nil toc:nil
+#+LATEX_CLASS: beamer
+#+LATEX_CLASS_OPTIONS: [10pt,aspectratio=169]
+#+STARTUP: beamer
+
+#+LATEX_HEADER: \usepackage[norsk]{babel}
+#+LATEX_HEADER: \usepackage[style=apa,sortcites=true,sorting=nyt,backend=biber,autocite=inline]{biblatex}
+#+LATEX_HEADER: \setlength\\parindent{0pt} % remove this if you need automatic section indentation
+
+#+bibliography: ~/Dropbox/org/bibs/references.bib
+#+cite_export: biblatex apa
+
+
+* ${4:Første slide}
+
+* Referanser
+  :PROPERTIES:
+  :BEAMER_OPT: fragile,allowframebreaks
+  :END:
+  #+LATEX:\renewcommand{\section}[2]{}
+  #+print_bibliography:
