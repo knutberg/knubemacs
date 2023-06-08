@@ -399,7 +399,7 @@
   (smartparens-global-mode 1))
 
 (use-package rainbow-delimiters
-   :hook ((prog-mode org-mode) . rainbow-delimiters-mode))
+   :hook (prog-mode . rainbow-delimiters-mode))
 
 (use-package writeroom-mode
   :bind
@@ -758,15 +758,10 @@
         reftex-plug-into-AUCTeX     t
         TeX-view-program-list       '(("Skim" "/Applications/Skim.app/Contents/SharedSupport/displayline -g %n %o %b"))
         TeX-view-program-selection  '((output-pdf "Skim"))
-        TeX-clean-confirm           nil))
-
-(use-package company-math
-  :hook (company-mode . (lambda ()
-                          (add-to-list 'company-backends 'company-math-symbols-unicode))))
-
-(use-package company-auctex
-  :init
-  (company-auctex-init))
+        TeX-clean-confirm           nil)
+  (add-to-list 'TeX-command-list
+               '("LaTeXmk" "latexmk %s" TeX-run-command t t :help "Run LaTeXmk") t)
+  (add-hook 'LaTeX-mode-hook (lambda () (setq TeX-command-default "LaTeXmk"))))
 
 (use-package cdlatex
   :hook (org-mode . turn-on-org-cdlatex)
